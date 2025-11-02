@@ -1,0 +1,239 @@
+.product-list-container {
+  padding: 3rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.product-list-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.product-list-header h1 {
+  font-size: 3rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.product-list-header h2 {
+  font-size: 3rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.product-list-header p {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  transition: color 0.3s ease;
+}
+
+.search-results-info {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-header);
+  color: white;
+  border-radius: 8px;
+  display: inline-block;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.no-products {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
+.no-products p {
+  font-size: 1.1rem;
+}
+
+.category-filter {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+.category-btn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.category-btn:hover {
+  background: var(--bg-primary);
+  border-color: var(--border-hover);
+}
+
+.category-btn.active {
+  background: var(--bg-header);
+  color: white;
+  border-color: var(--bg-header);
+}
+
+.product-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 1rem 0;
+}
+
+/* Koleksiyonlar */
+.collections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.collection-section {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.collection-section:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 4px 20px var(--shadow);
+}
+
+.collection-header {
+  width: 100%;
+  padding: 1.5rem 2rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.3s ease;
+  text-align: left;
+}
+
+.collection-header:hover {
+  background: var(--bg-primary);
+}
+
+.collection-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.collection-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  transition: color 0.3s ease;
+}
+
+.collection-count {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.collection-header:hover .collection-count {
+  background: var(--bg-secondary);
+}
+
+.collection-arrow {
+  color: var(--text-secondary);
+  transition: transform 0.3s ease, color 0.3s ease;
+  flex-shrink: 0;
+}
+
+.collection-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.collection-header:hover .collection-arrow {
+  color: var(--text-primary);
+}
+
+.collection-products {
+  padding: 1rem 2rem 2rem 2rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .product-list-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .product-list-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .product-list-header h1,
+  .product-list-header h2 {
+    font-size: 2rem;
+  }
+
+  .product-list-header p {
+    font-size: 1rem;
+  }
+
+  .collections-list {
+    gap: 1.5rem;
+  }
+
+  .collection-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .collection-name {
+    font-size: 1.25rem;
+  }
+
+  .collection-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .collection-products {
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
+  }
+}
+

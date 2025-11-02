@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+Allow: /product/
+Allow: /hakkimizda
+Allow: /iletisim
+Allow: /sss
+Allow: /siparis-sorgula
+Disallow: /checkout
+Disallow: /cart
+Disallow: /payment/
+Disallow: /odeme-basarisiz
+Disallow: /siparis-onayi
+
+# Crawl-delay
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://hiedra.com/sitemap.xml
+
+# Host
+Host: https://hiedra.com
+
