@@ -1,10 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useAuth } from './AuthContext'
 
 const CartContext = createContext()
 
 // LocalStorage key
 const CART_STORAGE_KEY = 'hiedra_cart'
+const GUEST_USER_ID_KEY = 'guestUserId'
 const CART_EXPIRY_DAYS = 30 // 30 gün süre
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
 // LocalStorage'dan sepeti yükle
 const loadCartFromStorage = () => {
@@ -51,10 +54,128 @@ export const useCart = () => {
 }
 
 export const CartProvider = ({ children }) => {
-  // İlk yüklemede localStorage'dan sepeti yükle
-  const [cartItems, setCartItems] = useState(() => loadCartFromStorage())
+  const { isAuthenticated, accessToken } = useAuth()
+  // İlk yüklemede boş sepet - sadece backend'den yüklenecek
+  const [cartItems, setCartItems] = useState([])
+  const [isLoadingCart, setIsLoadingCart] = useState(false)
+  const [discountAmount, setDiscountAmount] = useState(0)
+  const [couponCode, setCouponCode] = useState(null)
+  const [cartId, setCartId] = useState(null)
 
-  // Sepet her değiştiğinde localStorage'a kaydet
+  // Backend'den sepeti çek
+  const fetchCartFromBackend = async () => {
+    try {
+      setIsLoadingCart(true)
+      
+      // Giriş yapmış kullanıcı için guestUserId gönderme, sadece accessToken gönder
+      // Guest kullanıcılar için guestUserId gönder
+      let guestUserId = null
+      if (!isAuthenticated || !accessToken) {
+        guestUserId = localStorage.getItem(GUEST_USER_ID_KEY)
+      }
+      
+      const url = `${API_BASE_URL}/cart${guestUserId ? `?guestUserId=${guestUserId}` : ''}`
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken && { 'Authorization': `Bearer ${accessToken}` })
+        }
+      })
+
+      if (!response.ok) {
+        // Response ok değilse, boş sepet döndür
+        console.warn('Sepet backend\'den yüklenemedi, status:', response.status)
+        setCartItems([])
+        return []
+      }
+
+      const data = await response.json()
+      
+      if (data.isSuccess || data.success) {
+        const cart = data.data || data
+        // Sepet ID'sini kaydet
+        setCartId(cart.id || null)
+        // Kupon bilgilerini kaydet
+        setDiscountAmount(cart.discountAmount ? parseFloat(cart.discountAmount) : 0)
+        setCouponCode(cart.couponCode || null)
+        // Backend'den gelen cart items'ı frontend formatına çevir
+        const formattedItems = (cart.items || []).map(item => {
+          // Subtotal ve unitPrice'ı doğru parse et
+          const subtotal = item.subtotal ? (typeof item.subtotal === 'string' ? parseFloat(item.subtotal) : parseFloat(item.subtotal.toString())) : 0
+          const unitPrice = item.unitPrice ? (typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : parseFloat(item.unitPrice.toString())) : 0
+          const productPrice = item.product?.price ? (typeof item.product.price === 'string' ? parseFloat(item.product.price) : parseFloat(item.product.price.toString())) : 0
+          
+          return {
+            id: item.product?.id || item.productId,
+            name: item.product?.name || item.productName || 'Ürün',
+            price: unitPrice > 0 ? unitPrice : (productPrice > 0 ? productPrice : 0),
+            image: item.product?.coverImageUrl || item.product?.image || '/images/perde1kapak.jpg',
+            quantity: item.quantity || 1,
+            category: item.product?.category?.name || item.product?.category || 'Genel',
+            subtotal: subtotal > 0 ? subtotal : (unitPrice > 0 ? unitPrice * (item.quantity || 1) : (productPrice > 0 ? productPrice * (item.quantity || 1) : 0)),
+            customizations: (item.width || item.height || item.pleatType) ? {
+              en: item.width,
+              boy: item.height,
+              pileSikligi: item.pleatType,
+              calculatedPrice: subtotal > 0 ? subtotal : (unitPrice > 0 ? unitPrice * (item.quantity || 1) : 0)
+            } : null,
+            itemKey: item.id ? `backend_${item.id}` : null,
+            cartItemId: item.id // Backend'deki cart item ID'si
+          }
+        })
+        setCartItems(formattedItems)
+        // Backend'den gelen sepeti localStorage'a da kaydet (sync için)
+        saveCartToStorage(formattedItems)
+        return formattedItems
+      } else {
+        // Backend başarısız yanıt döndü
+        console.warn('Sepet backend\'den yüklenemedi:', data.message)
+        setCartItems([])
+        return []
+      }
+    } catch (error) {
+      console.error('Sepet backend\'den yüklenirken hata:', error)
+      // Hata durumunda boş sepet döndür
+      setCartItems([])
+      return []
+    } finally {
+      setIsLoadingCart(false)
+    }
+  }
+
+  const hasInitialized = useRef(false)
+  const lastAuthState = useRef({ isAuthenticated, accessToken })
+
+  // İlk yüklemede localStorage'dan sepeti yükle (hızlı başlangıç için)
+  useEffect(() => {
+    if (!hasInitialized.current) {
+      const storedItems = loadCartFromStorage()
+      if (storedItems && storedItems.length > 0) {
+        setCartItems(storedItems)
+      }
+      hasInitialized.current = true
+    }
+  }, [])
+
+  // Auth durumu değiştiğinde backend'den sepeti çek (sadece gerçek değişiklikte)
+  useEffect(() => {
+    const authChanged = 
+      lastAuthState.current.isAuthenticated !== isAuthenticated ||
+      lastAuthState.current.accessToken !== accessToken
+
+    if (authChanged && hasInitialized.current) {
+      // Auth durumu değişti, backend'den sepeti çek
+      fetchCartFromBackend()
+      lastAuthState.current = { isAuthenticated, accessToken }
+    } else if (!hasInitialized.current) {
+      // İlk yükleme - auth durumunu kaydet ama sepet çekme (localStorage'dan yüklendi)
+      lastAuthState.current = { isAuthenticated, accessToken }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken])
+
+  // Sepet her değiştiğinde localStorage'a kaydet (fallback için)
   useEffect(() => {
     saveCartToStorage(cartItems)
   }, [cartItems])
@@ -145,15 +266,44 @@ export const CartProvider = ({ children }) => {
     localStorage.removeItem(CART_STORAGE_KEY)
   }
 
-  const getCartTotal = () => {
-    return cartItems.reduce((total, item) => {
+  // Memoize edilmiş sepet toplamı - performans için
+  const getCartTotal = useCallback(() => {
+    const subtotal = cartItems.reduce((total, item) => {
+      // Backend'den gelen subtotal varsa onu kullan, yoksa hesapla
+      if (item.subtotal) {
+        return total + item.subtotal
+      }
       const itemPrice = item.customizations?.calculatedPrice || item.price
       return total + itemPrice * item.quantity
     }, 0)
-  }
+    // Kupon indirimi varsa çıkar
+    return subtotal - discountAmount
+  }, [cartItems, discountAmount])
 
-  const getCartItemsCount = () => {
+  // Ara toplam (kupon indirimi öncesi)
+  const getCartSubtotal = useCallback(() => {
+    return cartItems.reduce((total, item) => {
+      // Backend'den gelen subtotal varsa onu kullan, yoksa hesapla
+      if (item.subtotal) {
+        return total + item.subtotal
+      }
+      const itemPrice = item.customizations?.calculatedPrice || item.price
+      return total + itemPrice * item.quantity
+    }, 0)
+  }, [cartItems])
+
+  // Memoize edilmiş sepet ürün sayısı - performans için
+  const getCartItemsCount = useCallback(() => {
     return cartItems.reduce((count, item) => count + item.quantity, 0)
+  }, [cartItems])
+  
+  // Memoize edilmiş değerler - component'lerde kullanım için
+  const cartTotal = useMemo(() => getCartTotal(), [getCartTotal])
+  const cartItemsCount = useMemo(() => getCartItemsCount(), [getCartItemsCount])
+
+  // Backend'den sepeti yeniden yükle
+  const refreshCart = async () => {
+    return await fetchCartFromBackend()
   }
 
   return (
@@ -165,7 +315,17 @@ export const CartProvider = ({ children }) => {
         updateQuantity,
         clearCart,
         getCartTotal,
+        getCartSubtotal,
         getCartItemsCount,
+        cartTotal,
+        cartItemsCount,
+        refreshCart,
+        isLoadingCart,
+        discountAmount,
+        couponCode,
+        cartId,
+        setDiscountAmount,
+        setCouponCode,
       }}
     >
       {children}

@@ -1,8 +1,56 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import SEO from './SEO'
 import './About.css'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+
 const About = () => {
+  const [productStats, setProductStats] = useState({
+    totalProducts: 0,
+    categoryCount: 0,
+    loading: true
+  })
+  // Backend'den ürün ve kategori istatistiklerini çek
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Ürün sayısını çek
+        const productsResponse = await fetch(`${API_BASE_URL}/products?page=0&size=1`)
+        let totalProducts = 0
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json()
+          if (productsData.isSuccess || productsData.success) {
+            if (productsData.data && productsData.data.totalElements !== undefined) {
+              totalProducts = productsData.data.totalElements
+            }
+          }
+        }
+
+        // Kategori sayısını çek
+        const categoriesResponse = await fetch(`${API_BASE_URL}/categories`)
+        let categoryCount = 0
+        if (categoriesResponse.ok) {
+          const categoriesData = await categoriesResponse.json()
+          if (categoriesData.isSuccess || categoriesData.success) {
+            const categories = categoriesData.data || []
+            categoryCount = Array.isArray(categories) ? categories.length : 0
+          }
+        }
+
+        setProductStats({
+          totalProducts,
+          categoryCount,
+          loading: false
+        })
+      } catch (error) {
+        console.error('İstatistikler yüklenirken hata:', error)
+        setProductStats(prev => ({ ...prev, loading: false }))
+      }
+    }
+
+    fetchStats()
+  }, [])
+
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'AboutPage',
@@ -122,12 +170,24 @@ const About = () => {
             <p>Mutlu Müşteri</p>
           </div>
           <div className="stat-card">
-            <h3>100+</h3>
-            <p>Ürün Çeşidi</p>
+            <h3>
+              {productStats.loading ? (
+                <span style={{ fontSize: '0.8em', opacity: 0.7 }}>Yükleniyor...</span>
+              ) : (
+                `${productStats.totalProducts}+`
+              )}
+            </h3>
+            <p>Toplam Ürün</p>
           </div>
           <div className="stat-card">
-            <h3>50+</h3>
-            <p>Uzman Ekip</p>
+            <h3>
+              {productStats.loading ? (
+                <span style={{ fontSize: '0.8em', opacity: 0.7 }}>Yükleniyor...</span>
+              ) : (
+                `${productStats.categoryCount}+`
+              )}
+            </h3>
+            <p>Ürün Çeşidi</p>
           </div>
         </div>
       </div>

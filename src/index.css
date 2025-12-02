@@ -1,3 +1,5 @@
+/* Google Fonts - Loaded via HTML for better performance */
+
 * {
   margin: 0;
   padding: 0;
@@ -5,41 +7,481 @@
 }
 
 :root {
-  /* Light Theme */
-  --bg-primary: #f7fafc;
-  --bg-secondary: #ffffff;
-  --bg-header: #2c3e50;
-  --text-primary: #2c3e50;
-  --text-secondary: #4a5568;
-  --text-light: #718096;
-  --border-color: #e2e8f0;
-  --border-hover: #cbd5e0;
-  --shadow: rgba(0, 0, 0, 0.1);
-  --shadow-hover: rgba(0, 0, 0, 0.12);
+  /* ============================================
+     HIEDRA HOME COLLECTION - TEMA SİSTEMİ
+     Sade & Minimalist Siyah-Beyaz Tema
+     ============================================ */
+
+  /* ===========================================
+     1. ANA RENKLER (Primary Colors)
+     =========================================== */
+  
+  /* Ana Siyah Renk */
+  --primary: #000000;
+  --primary-hover: #1A1A1A;
+  --primary-light: rgba(0, 0, 0, 0.08);
+  --primary-transparent: rgba(0, 0, 0, 0.04);
+  
+  /* Eski gold değişkenleri için uyumluluk - siyah */
+  --gold-primary: #000000;
+  --gold-hover: #1A1A1A;
+  --gold-dark: #000000;
+  --gold-light: rgba(0, 0, 0, 0.05);
+  --gold-transparent: rgba(0, 0, 0, 0.06);
+  --gold-gradient: linear-gradient(135deg, #000000 0%, #1A1A1A 50%, #000000 100%);
+  
+  /* ===========================================
+     2. ARKA PLAN RENKLERİ (Background Colors)
+     =========================================== */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #FAFAFA;
+  --bg-card: #FFFFFF;
+  --bg-header: #FFFFFF;
+  --bg-footer: #000000;
+  --bg-modal: rgba(0, 0, 0, 0.6);
+  --bg-input: #FFFFFF;
+  --bg-hover: rgba(0, 0, 0, 0.02);
+  
+  /* ===========================================
+     3. YAZI RENKLERİ (Text Colors) - SİYAH
+     =========================================== */
+  --text-primary: #000000;
+  --text-secondary: #1A1A1A;
+  --text-tertiary: #333333;
+  --text-light: #666666;
+  --text-muted: #999999;
+  --text-on-gold: #FFFFFF;
+  --text-on-dark: #FFFFFF;
+  --text-link: #000000;
+  --text-link-hover: #333333;
+  --text-heading: #000000;
+  --text-body: #1A1A1A;
+  --text-caption: #666666;
+  
+  /* ===========================================
+     4. İKON RENKLERİ (Icon Colors)
+     =========================================== */
+  --icon-primary: #000000;
+  --icon-secondary: #333333;
+  --icon-tertiary: #666666;
+  --icon-muted: #999999;
+  --icon-light: #CCCCCC;
+  --icon-on-dark: #FFFFFF;
+  --icon-success: #16a34a;
+  --icon-danger: #dc2626;
+  --icon-warning: #d97706;
+  --icon-info: #2563eb;
+  --icon-hover: #000000;
+  --icon-active: #000000;
+  
+  /* ===========================================
+     5. BORDER RENKLERİ (Border Colors)
+     =========================================== */
+  --border-color: #E0E0E0;
+  --border-light: #F0F0F0;
+  --border-dark: #CCCCCC;
+  --border-hover: #000000;
+  --border-focus: #000000;
+  --border-error: #dc2626;
+  --border-success: #16a34a;
+  
+  /* ===========================================
+     6. GÖLGE DEĞERLERİ (Shadows)
+     =========================================== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1);
+  --shadow: rgba(0, 0, 0, 0.06);
+  --shadow-hover: rgba(0, 0, 0, 0.1);
+  --shadow-gold: rgba(0, 0, 0, 0.1);
+  --shadow-gold-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+  
+  /* ===========================================
+     7. DURUM RENKLERİ (Status Colors)
+     =========================================== */
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --success-dark: #15803d;
+  --danger: #dc2626;
+  --danger-light: #fef2f2;
+  --danger-dark: #b91c1c;
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --warning-dark: #b45309;
+  --info: #2563eb;
+  --info-light: #dbeafe;
+  --info-dark: #1d4ed8;
+  
+  /* ===========================================
+     8. BUTON STİLLERİ (Button Styles)
+     =========================================== */
+  
+  /* Primary Button - Siyah */
+  --btn-primary-bg: #000000;
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-hover: #1A1A1A;
+  --btn-primary-active: #000000;
+  --btn-primary-disabled: #CCCCCC;
+  
+  /* Secondary Button - Çerçeveli */
+  --btn-secondary-bg: transparent;
+  --btn-secondary-border: #000000;
+  --btn-secondary-text: #000000;
+  --btn-secondary-hover-bg: rgba(0, 0, 0, 0.04);
+  --btn-secondary-hover-border: #1A1A1A;
+  
+  /* Danger Button */
+  --btn-danger-bg: #dc2626;
+  --btn-danger-text: #FFFFFF;
+  --btn-danger-hover: #b91c1c;
+  
+  /* Ghost Button */
+  --btn-ghost-text: #333333;
+  --btn-ghost-hover-bg: rgba(0, 0, 0, 0.03);
+  
+  /* ===========================================
+     8. TİPOGRAFİ (Typography)
+     =========================================== */
+  
+  /* Font Aileleri */
+  --font-primary: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'Playfair Display', 'DM Serif Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  /* Font Ağırlıkları */
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  
+  /* Desktop Font Boyutları */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+  --text-4xl: 2.25rem;     /* 36px */
+  --text-5xl: 3rem;        /* 48px */
+  --text-6xl: 3.75rem;     /* 60px */
+  
+  /* Satır Yükseklikleri */
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+  
+  /* Harf Aralıkları */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+  
+  /* ===========================================
+     9. SPACING (Boşluklar)
+     =========================================== */
+  --space-0: 0;
+  --space-1: 0.25rem;      /* 4px */
+  --space-2: 0.5rem;       /* 8px */
+  --space-3: 0.75rem;      /* 12px */
+  --space-4: 1rem;         /* 16px */
+  --space-5: 1.25rem;      /* 20px */
+  --space-6: 1.5rem;       /* 24px */
+  --space-8: 2rem;         /* 32px */
+  --space-10: 2.5rem;      /* 40px */
+  --space-12: 3rem;        /* 48px */
+  --space-16: 4rem;        /* 64px */
+  --space-20: 5rem;        /* 80px */
+  --space-24: 6rem;        /* 96px */
+  
+  /* ===========================================
+     10. BORDER RADIUS
+     =========================================== */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;    /* 4px */
+  --radius-md: 0.5rem;     /* 8px */
+  --radius-lg: 0.75rem;    /* 12px */
+  --radius-xl: 1rem;       /* 16px */
+  --radius-2xl: 1.5rem;    /* 24px */
+  --radius-3xl: 2rem;      /* 32px */
+  --radius-full: 9999px;
+  
+  /* ===========================================
+     11. TRANSİTİONLAR (Transitions)
+     =========================================== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+  --transition-slower: 500ms ease;
+  --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ===========================================
+     12. Z-INDEX
+     =========================================== */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+  
+  /* ===========================================
+     13. LAYOUT
+     =========================================== */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1400px;
+  
+  --header-height-desktop: 70px;
+  --header-height-mobile: 60px;
+  --header-offset-desktop: 70px;
+  --header-offset-tablet: 65px;
+  --header-offset-mobile: 60px;
+  
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 80px;
+  
+  /* ===========================================
+     14. FORM ELEMENTLERİ
+     =========================================== */
+  --input-height-sm: 36px;
+  --input-height-md: 44px;
+  --input-height-lg: 52px;
+  --input-padding-x: 1rem;
+  --input-padding-y: 0.75rem;
+  --input-border-width: 1.5px;
+  --input-focus-ring: 0 0 0 3px rgba(176, 141, 73, 0.15);
+  
+  /* ===========================================
+     15. OVERLAY
+     =========================================== */
   --overlay: rgba(0, 0, 0, 0.5);
-  --success: #48bb78;
-  --danger: #e53e3e;
+  --overlay-light: rgba(255, 255, 255, 0.8);
+  --overlay-blur: blur(8px);
+
+  /* Legacy support */
+  --primary: var(--gold-primary);
 }
 
+/* ===========================================
+   MOBİL RESPONSIVE FONT BOYUTLARI
+   =========================================== */
+
+/* Tablet (768px ve altı) */
+@media (max-width: 768px) {
+  :root {
+    --text-xs: 0.7rem;       /* 11px */
+    --text-sm: 0.8125rem;    /* 13px */
+    --text-base: 0.9375rem;  /* 15px */
+    --text-lg: 1rem;         /* 16px */
+    --text-xl: 1.125rem;     /* 18px */
+    --text-2xl: 1.25rem;     /* 20px */
+    --text-3xl: 1.5rem;      /* 24px */
+    --text-4xl: 1.875rem;    /* 30px */
+    --text-5xl: 2.25rem;     /* 36px */
+    --text-6xl: 2.75rem;     /* 44px */
+    
+    --space-6: 1.25rem;
+    --space-8: 1.5rem;
+    --space-10: 2rem;
+    --space-12: 2.5rem;
+    --space-16: 3rem;
+    
+    --header-height-mobile: 56px;
+    --header-offset-mobile: 56px;
+  }
+}
+
+/* Mobil (480px ve altı) */
+@media (max-width: 480px) {
+  :root {
+    --text-xs: 0.6875rem;    /* 11px */
+    --text-sm: 0.75rem;      /* 12px */
+    --text-base: 0.875rem;   /* 14px */
+    --text-lg: 0.9375rem;    /* 15px */
+    --text-xl: 1rem;         /* 16px */
+    --text-2xl: 1.125rem;    /* 18px */
+    --text-3xl: 1.25rem;     /* 20px */
+    --text-4xl: 1.5rem;      /* 24px */
+    --text-5xl: 1.875rem;    /* 30px */
+    --text-6xl: 2.25rem;     /* 36px */
+    
+    --space-4: 0.875rem;
+    --space-5: 1rem;
+    --space-6: 1.125rem;
+    --space-8: 1.25rem;
+    --space-10: 1.5rem;
+    --space-12: 2rem;
+    
+    --radius-lg: 0.625rem;
+    --radius-xl: 0.875rem;
+    --radius-2xl: 1.25rem;
+    
+    --input-height-sm: 32px;
+    --input-height-md: 40px;
+    --input-height-lg: 48px;
+    --input-padding-x: 0.75rem;
+    --input-padding-y: 0.625rem;
+  }
+}
+
+/* Küçük Mobil (360px ve altı) */
+@media (max-width: 360px) {
+  :root {
+    --text-xs: 0.625rem;     /* 10px */
+    --text-sm: 0.6875rem;    /* 11px */
+    --text-base: 0.8125rem;  /* 13px */
+    --text-lg: 0.875rem;     /* 14px */
+    --text-xl: 0.9375rem;    /* 15px */
+    --text-2xl: 1rem;        /* 16px */
+    --text-3xl: 1.125rem;    /* 18px */
+    --text-4xl: 1.375rem;    /* 22px */
+    --text-5xl: 1.625rem;    /* 26px */
+    --text-6xl: 2rem;        /* 32px */
+    
+    --space-3: 0.5rem;
+    --space-4: 0.75rem;
+    --space-5: 0.875rem;
+    --space-6: 1rem;
+    
+    --input-height-sm: 30px;
+    --input-height-md: 38px;
+    --input-height-lg: 44px;
+    --input-padding-x: 0.625rem;
+  }
+}
+
+/* ===========================================
+   KOYU TEMA (Dark Theme)
+   =========================================== */
 [data-theme='dark'] {
-  /* Dark Theme */
-  --bg-primary: #1a202c;
-  --bg-secondary: #2d3748;
-  --bg-header: #1a202c;
-  --text-primary: #f7fafc;
-  --text-secondary: #e2e8f0;
-  --text-light: #a0aec0;
-  --border-color: #4a5568;
-  --border-hover: #718096;
-  --shadow: rgba(0, 0, 0, 0.3);
-  --shadow-hover: rgba(0, 0, 0, 0.4);
-  --overlay: rgba(0, 0, 0, 0.7);
-  --success: #48bb78;
-  --danger: #fc8181;
+  /* Arka Plan */
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1A1A1A;
+  --bg-card: #111111;
+  --bg-header: #0A0A0A;
+  --bg-footer: #000000;
+  --bg-input: #1A1A1A;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  
+  /* Metinler - Beyaz */
+  --text-primary: #FFFFFF;
+  --text-secondary: #E0E0E0;
+  --text-tertiary: #B0B0B0;
+  --text-light: #808080;
+  --text-muted: #606060;
+  --text-on-dark: #FFFFFF;
+  --text-heading: #FFFFFF;
+  --text-body: #E0E0E0;
+  
+  /* İkonlar */
+  --icon-primary: #FFFFFF;
+  --icon-secondary: #E0E0E0;
+  --icon-tertiary: #B0B0B0;
+  --icon-muted: #606060;
+  
+  /* Borderlar */
+  --border-color: #2A2A2A;
+  --border-light: #333333;
+  --border-dark: #1A1A1A;
+  
+  /* Gölgeler */
+  --shadow: rgba(0, 0, 0, 0.4);
+  --shadow-hover: rgba(0, 0, 0, 0.5);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+  
+  /* Overlay */
+  --overlay: rgba(0, 0, 0, 0.8);
+  --overlay-light: rgba(0, 0, 0, 0.6);
+  
+  /* Butonlar */
+  --btn-primary-bg: #FFFFFF;
+  --btn-primary-text: #000000;
+  --btn-primary-hover: #E0E0E0;
+  --btn-secondary-bg: transparent;
+  --btn-secondary-border: #FFFFFF;
+  --btn-secondary-text: #FFFFFF;
+  --btn-secondary-hover: rgba(255, 255, 255, 0.1);
+  --btn-ghost-text: #E0E0E0;
+  --btn-ghost-hover-bg: rgba(255, 255, 255, 0.08);
+  
+  /* Primary renk dark mode */
+  --primary: #FFFFFF;
+  --primary-hover: #E0E0E0;
+  --gold-primary: #FFFFFF;
+  --gold-hover: #E0E0E0;
+  --gold-light: rgba(255, 255, 255, 0.1);
+  --gold-light-alpha: rgba(255, 255, 255, 0.08);
+  
+  /* Buton metin renkleri - SİYAH (beyaz arka plan üzerinde) */
+  --text-on-gold: #000000;
+}
+
+/* ===========================================
+   AÇIK TEMA (Light Theme - Varsayılan)
+   =========================================== */
+[data-theme='light'] {
+  /* Arka Plan */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #FAFAFA;
+  --bg-card: #FFFFFF;
+  --bg-header: #FFFFFF;
+  --bg-footer: #000000;
+  --bg-input: #FFFFFF;
+  --bg-hover: rgba(0, 0, 0, 0.02);
+  
+  /* Metinler - Siyah */
+  --text-primary: #000000;
+  --text-secondary: #1A1A1A;
+  --text-tertiary: #333333;
+  --text-light: #666666;
+  --text-muted: #999999;
+  --text-on-dark: #FFFFFF;
+  --text-on-gold: #FFFFFF;
+  --text-heading: #000000;
+  --text-body: #1A1A1A;
+  
+  /* İkonlar */
+  --icon-primary: #000000;
+  --icon-secondary: #333333;
+  --icon-tertiary: #666666;
+  
+  /* Borderlar */
+  --border-color: #E0E0E0;
+  --border-light: #F0F0F0;
+  --border-dark: #CCCCCC;
+  
+  /* Gölgeler */
+  --shadow: rgba(0, 0, 0, 0.06);
+  --shadow-hover: rgba(0, 0, 0, 0.1);
+  
+  /* Overlay */
+  --overlay: rgba(0, 0, 0, 0.5);
+  --overlay-light: rgba(255, 255, 255, 0.95);
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -47,10 +489,352 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Typography Hierarchy */
+
+/* Headings - Playfair Display (Elegant, Classic) */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+h4 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+h5 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+h6 {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* Subheadings */
+.subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.subtitle-small {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* Body Text */
+p {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Small Text */
+small, .text-small {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* Links */
+a {
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--text-tertiary);
+}
+
+/* Buttons - Premium Gold Theme */
+button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+}
+
+/* Primary Button (Sepete Ekle, Satın Al) */
+.btn-primary,
+button.btn-primary {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: none;
+  padding: 0.875rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px var(--shadow-gold);
+}
+
+.btn-primary:hover,
+button.btn-primary:hover {
+  background-color: var(--btn-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-gold);
+}
+
+.btn-primary:active,
+button.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary Button */
+.btn-secondary,
+button.btn-secondary {
+  background-color: transparent;
+  color: var(--btn-secondary-text);
+  border: 2px solid var(--btn-secondary-border);
+  padding: 0.875rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary:hover,
+button.btn-secondary:hover {
+  background-color: var(--btn-secondary-hover-bg);
+  border-color: var(--gold-hover);
+  color: var(--gold-hover);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active,
+button.btn-secondary:active {
+  transform: translateY(0);
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 2rem;
+    line-height: 1.25;
+  }
+
+  h3 {
+    font-size: 1.75rem;
+    line-height: 1.3;
+  }
+
+  h4 {
+    font-size: 1.375rem;
+    line-height: 1.35;
+  }
+
+  .subtitle {
+    font-size: 1.25rem;
+    line-height: 1.4;
+  }
+
+  body {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.875rem;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.625rem;
+    line-height: 1.25;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+
+  h4 {
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  .subtitle {
+    font-size: 1.125rem;
+    line-height: 1.4;
+  }
+
+  body {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* ===========================================
+   DARK MODE GLOBAL STİLLERİ
+   =========================================== */
+
+/* Dark mode için container ve card stilleri */
+[data-theme='dark'] .container,
+[data-theme='dark'] .card,
+[data-theme='dark'] .box,
+[data-theme='dark'] .panel,
+[data-theme='dark'] .wrapper,
+[data-theme='dark'] .content,
+[data-theme='dark'] .section,
+[data-theme='dark'] .modal-content,
+[data-theme='dark'] .dropdown,
+[data-theme='dark'] .menu {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* Dark mode için input stilleri */
+[data-theme='dark'] input,
+[data-theme='dark'] textarea,
+[data-theme='dark'] select {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme='dark'] input::placeholder,
+[data-theme='dark'] textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Dark mode için tablo stilleri */
+[data-theme='dark'] table,
+[data-theme='dark'] th,
+[data-theme='dark'] td {
+  border-color: var(--border-color);
+}
+
+[data-theme='dark'] th {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] td {
+  color: var(--text-secondary);
+}
+
+/* Dark mode için border stilleri */
+[data-theme='dark'] hr {
+  border-color: var(--border-color);
+}
+
+/* Dark mode smooth transition */
+*, *::before, *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Dark mode için sabit renkli elementleri override et */
+[data-theme='dark'] [style*="background: #fff"],
+[data-theme='dark'] [style*="background: #ffffff"],
+[data-theme='dark'] [style*="background: white"],
+[data-theme='dark'] [style*="background-color: #fff"],
+[data-theme='dark'] [style*="background-color: #ffffff"],
+[data-theme='dark'] [style*="background-color: white"] {
+  background-color: var(--bg-card) !important;
+}
+
+[data-theme='dark'] [style*="color: #000"],
+[data-theme='dark'] [style*="color: #1a1a1a"],
+[data-theme='dark'] [style*="color: black"] {
+  color: var(--text-primary) !important;
+}
+
+/* Dark mode butonlar - beyaz arka plan, siyah metin */
+[data-theme='dark'] .btn-primary,
+[data-theme='dark'] button.btn-primary,
+[data-theme='dark'] .add-to-cart-btn,
+[data-theme='dark'] .add-to-cart-btn-home,
+[data-theme='dark'] .open-pricing-modal-btn-home {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border-color: #FFFFFF !important;
+}
+
+[data-theme='dark'] .btn-primary:hover,
+[data-theme='dark'] button.btn-primary:hover,
+[data-theme='dark'] .add-to-cart-btn:hover,
+[data-theme='dark'] .add-to-cart-btn-home:hover,
+[data-theme='dark'] .open-pricing-modal-btn-home:hover {
+  background-color: #E0E0E0 !important;
+  color: #000000 !important;
+}
+
+[data-theme='dark'] .btn-secondary,
+[data-theme='dark'] button.btn-secondary {
+  background-color: transparent !important;
+  color: #FFFFFF !important;
+  border-color: #FFFFFF !important;
+}
+
+[data-theme='dark'] .btn-secondary:hover,
+[data-theme='dark'] button.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 

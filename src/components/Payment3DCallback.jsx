@@ -48,7 +48,7 @@ const Payment3DCallback = () => {
       sessionStorage.setItem('lastOrderData', JSON.stringify(orderData))
       
       console.log('Başarılı ödeme - sipariş onay sayfasına yönlendiriliyor...')
-      // Hemen yönlendir - sayfada kalmasın
+      // Sipariş onay sayfasına yönlendir
       window.location.replace('/siparis-onayi')
     } else {
       // Ödeme başarısız - Backend'den gelen hata mesajını kullan

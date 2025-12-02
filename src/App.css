@@ -4,21 +4,29 @@
   flex-direction: column;
   background: var(--bg-primary);
   transition: background 0.3s ease;
+  position: relative;
 }
 
 .main-content {
   flex: 1;
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  background: var(--bg-primary);
+  background: transparent;
   transition: background 0.3s ease;
+  padding-top: var(--header-offset-desktop);
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding-top: var(--header-offset-tablet);
+  }
 }
 
 @media (max-width: 768px) {
   .main-content {
-    padding: 1rem;
+    width: 100%;
+    padding-top: var(--header-offset-mobile);
   }
 }
 

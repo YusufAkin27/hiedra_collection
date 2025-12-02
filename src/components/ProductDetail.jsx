@@ -1,143 +1,717 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { products } from '../data/products'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
+import { useToast } from './Toast'
 import LazyImage from './LazyImage'
 import SEO from './SEO'
 import './ProductDetail.css'
+import './CategoriesShowcase.css'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
 const ProductDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { addToCart } = useCart()
+  const { refreshCart } = useCart()
+  const { accessToken } = useAuth()
+  const toast = useToast()
+  const location = useLocation()
+  const reviewSectionRef = useRef(null)
+  const loadMoreReviewsRef = useRef(null)
+  const detailWrapperRef = useRef(null)
+  const mainImageWrapperRef = useRef(null)
   const [quantity, setQuantity] = useState(1)
-  const [selectedImage, setSelectedImage] = useState(0)
-  const intervalRef = useRef(null)
-  const isPausedRef = useRef(false)
+  const [product, setProduct] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [addToCartError, setAddToCartError] = useState('')
+  const [addToCartSuccess, setAddToCartSuccess] = useState(false)
   
   // Fiyatlandırma formu state'leri
   const [en, setEn] = useState('')
   const [boy, setBoy] = useState('')
-  const [pileSikligi, setPileSikligi] = useState('pilesiz')
+  const [pileSikligi, setPileSikligi] = useState('1x1')
   const [calculatedPrice, setCalculatedPrice] = useState(0)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isCalculatingPrice, setIsCalculatingPrice] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(true)
+  const [allProducts, setAllProducts] = useState([]) // Tüm ürünler (ilgili ürünler için)
+  const [formErrors, setFormErrors] = useState({ en: '', boy: '' }) // Form hata mesajları
+  const [activeImageIndex] = useState(0)
+  const [reviews, setReviews] = useState([])
+  const [reviewSummary, setReviewSummary] = useState(null)
+  const [reviewPageMeta, setReviewPageMeta] = useState({
+    page: 0,
+    size: 6,
+    hasNext: true,
+    totalElements: 0,
+    totalPages: 0
+  })
+  const [isFetchingReviews, setIsFetchingReviews] = useState(false)
+  const [reviewSortOption, setReviewSortOption] = useState('LATEST')
+  const [withImageReviewsOnly, setWithImageReviewsOnly] = useState(false)
+  const [reviewError, setReviewError] = useState('')
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [modalImageSrc, setModalImageSrc] = useState(null)
+  const [detailModalPosition, setDetailModalPosition] = useState(null)
+  const [isImageBlurred, setIsImageBlurred] = useState(false)
+  const [isReviewImageModalOpen, setIsReviewImageModalOpen] = useState(false)
+  const [currentReviewImageIndex, setCurrentReviewImageIndex] = useState(0)
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
+  const [modalMeasurements, setModalMeasurements] = useState({ en: '', boy: '', pileSikligi: '1x1' })
+  const [modalCalculatedPrice, setModalCalculatedPrice] = useState(0)
+  const [isModalCalculatingPrice, setIsModalCalculatingPrice] = useState(false)
+  const [isModalDropdownOpen, setIsModalDropdownOpen] = useState(false)
+  const [modalErrors, setModalErrors] = useState({ en: '', boy: '' })
+  const galleryImages = useMemo(() => {
+    if (!product) return []
+    const images = []
+    if (product.image) {
+      images.push(product.image)
+    }
+    if (Array.isArray(product.detailImages)) {
+      product.detailImages
+        .filter(Boolean)
+        .forEach(img => images.push(img))
+    }
+    return images
+      .filter(Boolean)
+      .filter((img, index, arr) => arr.indexOf(img) === index)
+  }, [product])
+
+  const currentImage = galleryImages[activeImageIndex] || galleryImages[0] || product?.image || '/images/perde1kapak.jpg'
+  const detailImage = galleryImages.length > 1 ? galleryImages[1] : null
+
+  // Tüm yorum görsellerini topla
+  const allReviewImages = useMemo(() => {
+    if (!reviews || reviews.length === 0) return []
+    const images = []
+    reviews.forEach(review => {
+      if (review.imageUrls && Array.isArray(review.imageUrls)) {
+        review.imageUrls.forEach(url => {
+          if (url) images.push(url)
+        })
+      }
+    })
+    return images
+  }, [reviews])
+
+  // Yorum görseli modal açma
+  const handleReviewImageClick = useCallback((clickedImageUrl) => {
+    const imageIndex = allReviewImages.findIndex(url => url === clickedImageUrl)
+    if (imageIndex !== -1) {
+      setCurrentReviewImageIndex(imageIndex)
+      setIsReviewImageModalOpen(true)
+      document.body.style.overflow = 'hidden'
+    }
+  }, [allReviewImages])
+
+  // Yorum görseli modal kapatma
+  const closeReviewImageModal = useCallback(() => {
+    setIsReviewImageModalOpen(false)
+    document.body.style.overflow = ''
+  }, [])
+
+  // Önceki görsel
+  const goToPreviousReviewImage = useCallback(() => {
+    setCurrentReviewImageIndex(prev => {
+      if (prev > 0) {
+        return prev - 1
+      }
+      return allReviewImages.length - 1
+    })
+  }, [allReviewImages.length])
+
+  // Sonraki görsel
+  const goToNextReviewImage = useCallback(() => {
+    setCurrentReviewImageIndex(prev => {
+      if (prev < allReviewImages.length - 1) {
+        return prev + 1
+      }
+      return 0
+    })
+  }, [allReviewImages.length])
+
+  // Klavye ile navigasyon
+  useEffect(() => {
+    if (!isReviewImageModalOpen) return
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        closeReviewImageModal()
+      } else if (e.key === 'ArrowLeft') {
+        goToPreviousReviewImage()
+      } else if (e.key === 'ArrowRight') {
+        goToNextReviewImage()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isReviewImageModalOpen, closeReviewImageModal, goToPreviousReviewImage, goToNextReviewImage])
+
+  const handleDetailPreviewClick = useCallback((event, imageSrc) => {
+    if (event && typeof event.stopPropagation === 'function') {
+      event.stopPropagation()
+    }
+    const imageWrapper = mainImageWrapperRef.current
+    const wrapper = detailWrapperRef.current
+    
+    if (typeof window === 'undefined') {
+      setDetailModalPosition(null)
+    } else if (imageWrapper && wrapper) {
+      const imageRect = imageWrapper.getBoundingClientRect()
+      const wrapperRect = wrapper.getBoundingClientRect()
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0
+      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft || 0
+      const wrapperTop = wrapperRect.top + scrollTop
+      const wrapperLeft = wrapperRect.left + scrollLeft
+      
+      setDetailModalPosition({
+        top: imageRect.top + scrollTop - wrapperTop + (imageRect.height * 0.075),
+        left: imageRect.left + scrollLeft - wrapperLeft + (imageRect.width * 0.075),
+        width: imageRect.width * 0.85,
+        height: imageRect.height * 0.85
+      })
+    } else {
+      setDetailModalPosition(null)
+    }
+    
+    setModalImageSrc(imageSrc || detailImage || currentImage)
+    setIsDetailModalOpen(true)
+    setIsImageBlurred(true)
+  }, [currentImage, detailImage])
+
+  const closeDetailModal = useCallback(() => {
+    setIsDetailModalOpen(false)
+    setModalImageSrc(null)
+    setDetailModalPosition(null)
+    setIsImageBlurred(false)
+  }, [])
 
   const pileOptions = [
-    { value: 'pilesiz', label: 'Pilesiz' },
+    { value: '1x1', label: 'Pilesiz (1x1)' },
     { value: '1x2', label: '1x2'  },
     { value: '1x3', label: '1x3' }
   ]
 
-  const product = products.find(p => p.id === parseInt(id))
+  // Modal aç/kapat
+  const openPricingModal = () => {
+    setModalMeasurements({ en: '', boy: '', pileSikligi: '1x1' })
+    setModalCalculatedPrice(0)
+    setModalErrors({ en: '', boy: '' })
+    setIsPricingModalOpen(true)
+  }
 
-  // Tüm görselleri birleştir (ana görsel + detay görselleri) - Memoize edilmiş
-  const allImages = useMemo(() => {
-    if (!product) return []
-    return product.detailImages 
-      ? [product.image, ...product.detailImages]
-      : [product.image]
-  }, [product])
+  const closePricingModal = () => {
+    setIsPricingModalOpen(false)
+    setModalMeasurements({ en: '', boy: '', pileSikligi: '1x1' })
+    setModalCalculatedPrice(0)
+    setModalErrors({ en: '', boy: '' })
+  }
 
-  // Otomatik fotoğraf geçişi
-  useEffect(() => {
-    // Ürün yoksa veya görsel yoksa çalıştırma
-    if (!product || !allImages || allImages.length <= 1) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+  // Modal ölçü değişikliği
+  const handleModalMeasurementChange = (field, value) => {
+    setModalMeasurements(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    
+    // Hata temizle
+    setModalErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[field]
+      return newErrors
+    })
+  }
+
+  // Modal fiyat hesaplama
+  const calculateModalPrice = useCallback(async () => {
+    const { en, boy, pileSikligi } = modalMeasurements
+    if (!en || !boy || !pileSikligi || !product || !product.id) {
+      setModalCalculatedPrice(0)
+      return
+    }
+    
+    const enNum = parseFloat(en)
+    const boyNum = parseFloat(boy)
+    
+    if (isNaN(enNum) || isNaN(boyNum)) {
+      setModalCalculatedPrice(0)
       return
     }
 
-    // Önceki timer'ı temizle
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
+    setIsModalCalculatingPrice(true)
 
-    // Otomatik geçiş timer'ı başlat
-    const imagesCount = allImages.length
-    
-    const startAutoSlide = () => {
-      intervalRef.current = setInterval(() => {
-        setSelectedImage((prevIndex) => {
-          return (prevIndex + 1) % imagesCount
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/${product.id}/calculate-price`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          width: enNum,
+          height: boyNum,
+          pleatType: pileSikligi,
+          price: product.price
         })
-      }, 5000) // 5 saniye
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.isSuccess || data.success) {
+          const calculatedPriceValue = parseFloat(data.data.calculatedPrice)
+          setModalCalculatedPrice(isNaN(calculatedPriceValue) ? 0 : calculatedPriceValue)
+        } else {
+          // Fallback hesaplama
+          let pileMultiplier = 1
+          try {
+            const parts = pileSikligi.split('x')
+            if (parts.length === 2) {
+              pileMultiplier = parseFloat(parts[1])
+              if (isNaN(pileMultiplier)) pileMultiplier = 1
+            }
+          } catch (e) {
+            pileMultiplier = 1
+          }
+          const enMetre = enNum / 100.0
+          const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0
+          setModalCalculatedPrice(Math.round(price * enMetre * pileMultiplier * 100) / 100)
+        }
+      } else {
+        // Fallback hesaplama
+        let pileMultiplier = 1
+        try {
+          const parts = pileSikligi.split('x')
+          if (parts.length === 2) {
+            pileMultiplier = parseFloat(parts[1])
+            if (isNaN(pileMultiplier)) pileMultiplier = 1
+          }
+        } catch (e) {
+          pileMultiplier = 1
+        }
+        const enMetre = enNum / 100.0
+        const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0
+        setModalCalculatedPrice(Math.round(price * enMetre * pileMultiplier * 100) / 100)
+      }
+    } catch (error) {
+      console.error('Fiyat hesaplama hatası:', error)
+      // Fallback hesaplama
+      let pileMultiplier = 1
+      try {
+        const parts = pileSikligi.split('x')
+        if (parts.length === 2) {
+          pileMultiplier = parseFloat(parts[1])
+          if (isNaN(pileMultiplier)) pileMultiplier = 1
+        }
+      } catch (e) {
+        pileMultiplier = 1
+      }
+      const enMetre = enNum / 100.0
+      const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0
+      setModalCalculatedPrice(Math.round(price * enMetre * pileMultiplier * 100) / 100)
+    } finally {
+      setIsModalCalculatingPrice(false)
+    }
+  }, [modalMeasurements, product])
+
+  // Modal fiyat hesaplama useEffect
+  useEffect(() => {
+    if (modalMeasurements.en && modalMeasurements.boy && modalMeasurements.pileSikligi && product?.id) {
+      const timeoutId = setTimeout(() => {
+        calculateModalPrice()
+      }, 500)
+      return () => clearTimeout(timeoutId)
+    } else {
+      setModalCalculatedPrice(0)
+    }
+  }, [modalMeasurements, product?.id, calculateModalPrice])
+
+  // Modal'dan sepete ekle
+  const handleModalAddToCart = async () => {
+    const { en, boy, pileSikligi } = modalMeasurements
+    
+    if (!en || !boy) {
+      setModalErrors({ en: 'Lütfen genişlik giriniz.', boy: 'Lütfen yükseklik giriniz.' })
+      toast.warning('Lütfen en ve boy değerlerini girin!')
+      return
+    }
+    
+    const enNum = parseFloat(en)
+    const boyNum = parseFloat(boy)
+    
+    if (isNaN(enNum) || isNaN(boyNum)) {
+      setModalErrors({ en: 'Geçerli sayı giriniz.', boy: 'Geçerli sayı giriniz.' })
+      toast.warning('Lütfen geçerli sayısal değerler giriniz.')
+      return
+    }
+    
+    if (enNum < 50 || enNum > 1000) {
+      setModalErrors(prev => ({ ...prev, en: 'Genişlik 50-1000 cm arasında olmalıdır.' }))
+      toast.warning('Genişlik değeri 50 ile 1000 cm arasında olmalıdır.')
+      return
+    }
+    
+    if (boyNum < 30 || boyNum > 270) {
+      setModalErrors(prev => ({ ...prev, boy: 'Yükseklik 30-270 cm arasında olmalıdır.' }))
+      toast.warning('Yükseklik değeri 30 ile 270 cm arasında olmalıdır.')
+      return
+    }
+    
+    if (!product || !product.id) {
+      toast.error('Ürün bilgisi bulunamadı.')
+      return
     }
 
-    // Pause durumunu kontrol et, değilse başlat
-    if (!isPausedRef.current) {
-      startAutoSlide()
-    }
+    setIsAddingToCart(true)
 
-    // Cleanup function
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
+    try {
+      let guestUserId = null
+      if (!accessToken) {
+        guestUserId = localStorage.getItem('guestUserId')
+        if (!guestUserId) {
+          guestUserId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+          localStorage.setItem('guestUserId', guestUserId)
+        }
+      }
+
+      const response = await fetch(`${API_BASE_URL}/cart/items${guestUserId ? `?guestUserId=${guestUserId}` : ''}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken && { 'Authorization': `Bearer ${accessToken}` })
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: 1,
+          width: enNum,
+          height: boyNum,
+          pleatType: pileSikligi
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && (data.isSuccess || data.success)) {
+        if (refreshCart) {
+          await refreshCart()
+        }
+        toast.success('Ürün sepete başarıyla eklendi!')
+        closePricingModal()
+      } else {
+        throw new Error(data.message || 'Ürün sepete eklenemedi')
+      }
+    } catch (error) {
+      console.error('Sepete ekleme hatası:', error)
+      const errorMessage = error.message || 'Sepete eklenirken hata oluştu.'
+      setModalErrors(prev => ({ ...prev, general: errorMessage }))
+      toast.error(errorMessage)
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
+
+  // Renk hex kodunu parse et
+  const getColorHex = (colorValue) => {
+    if (!colorValue) return null
+    
+    const trimmed = colorValue.trim()
+    
+    // Eğer zaten hex formatındaysa (# ile başlıyorsa) direkt kullan
+    if (trimmed.startsWith('#')) {
+      const hexPattern = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/
+      if (hexPattern.test(trimmed)) {
+        return trimmed
       }
     }
-  }, [product, allImages])
-
-  // Manuel thumbnail seçildiğinde timer'ı resetle
-  const handleThumbnailClick = (index) => {
-    setSelectedImage(index)
     
-    // Timer'ı temizle
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
+    // Hex formatında değilse, renk adı olabilir - fallback için renk map'i
+    const colorMap = {
+      'beyaz': '#ffffff', 'white': '#ffffff',
+      'siyah': '#000000', 'black': '#000000',
+      'kahverengi': '#8B4513', 'brown': '#8B4513',
+      'krem': '#FFFDD0', 'cream': '#FFFDD0',
+      'bej': '#F5F5DC', 'beige': '#F5F5DC',
+      'gri': '#808080', 'gray': '#808080', 'grey': '#808080',
+      'mavi': '#0000FF', 'blue': '#0000FF',
+      'yeşil': '#008000', 'green': '#008000',
+      'kırmızı': '#FF0000', 'red': '#FF0000',
+      'sarı': '#FFFF00', 'yellow': '#FFFF00',
+      'turuncu': '#FFA500', 'orange': '#FFA500',
+      'pembe': '#FFC0CB', 'pink': '#FFC0CB',
+      'mor': '#800080', 'purple': '#800080',
+      'lacivert': '#000080', 'navy': '#000080',
+      'turkuaz': '#40E0D0', 'turquoise': '#40E0D0',
+      'bordo': '#800020', 'burgundy': '#800020',
     }
-    
-    // Hemen yeniden başlat (yeni seçilen görselden itibaren 5 saniye sayar)
-    if (allImages.length > 1) {
-      setTimeout(() => {
-        if (!isPausedRef.current) {
-          intervalRef.current = setInterval(() => {
-            setSelectedImage((prevIndex) => {
-              return (prevIndex + 1) % allImages.length
-            })
-          }, 5000)
+    const normalized = trimmed.toLowerCase()
+    return colorMap[normalized] || trimmed
+  }
+
+  // Backend'den ürün bilgilerini çek
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        setProduct(null) // Önce temizle
+        
+        // ID'yi parse et
+        const productId = typeof id === 'string' ? parseInt(id, 10) : id
+        
+        if (isNaN(productId)) {
+          console.error('Geçersiz ürün ID:', id)
+          setIsLoading(false)
+          return
         }
-      }, 100)
+
+        console.log('Ürün detayı çekiliyor, ID:', productId)
+        
+        const response = await fetch(`${API_BASE_URL}/products/${productId}`)
+        
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Backend yanıtı:', data)
+          
+          if (data.isSuccess || data.success) {
+            const productData = data.data || data
+            
+            // Price'ı number'a çevir
+            const price = typeof productData.price === 'number' 
+              ? productData.price 
+              : parseFloat(productData.price) || 0
+            
+            setProduct({
+              ...productData,
+              id: productData.id || productId,
+              name: productData.name || 'Ürün',
+              price: price,
+              // Backend'den gelen veriyi frontend formatına çevir
+              image: productData.coverImageUrl || productData.image || '/images/perde1kapak.jpg',
+              detailImages: productData.detailImageUrl 
+                ? (Array.isArray(productData.detailImageUrl) 
+                    ? productData.detailImageUrl 
+                    : [productData.detailImageUrl])
+                : [],
+              inStock: (productData.quantity || 0) > 0,
+              category: productData.category?.name || productData.category || 'Genel',
+              // Ürün özellikleri
+              mountingType: productData.mountingType || '',
+              material: productData.material || '',
+              lightTransmittance: productData.lightTransmittance || '',
+              pieceCount: productData.pieceCount || null,
+              usageArea: productData.usageArea || '',
+              color: productData.color || '',
+              // İstatistikler
+              reviewCount: productData.reviewCount || 0,
+              averageRating: productData.averageRating || 0,
+              viewCount: productData.viewCount || 0,
+            })
+          } else {
+            console.error('Backend yanıt hatası:', data)
+            setProduct(null)
+          }
+        } else if (response.status === 404) {
+          console.error('Ürün bulunamadı (404)')
+          setProduct(null)
+        } else {
+          console.error('HTTP hatası:', response.status)
+          setProduct(null)
+        }
+      } catch (error) {
+        console.error('Ürün yüklenirken hata:', error)
+        setProduct(null)
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }
 
-  // Mouse hover'da duraklat
-  const handleImageHover = () => {
-    isPausedRef.current = true
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
+    fetchProduct()
+  }, [id])
+
+  useEffect(() => {
+    if (!product) return
+    if (location.hash === '#reviews') {
+      // Yorumlar yüklendikten sonra scroll yap
+      if (reviewSectionRef.current && !isFetchingReviews && reviews.length > 0) {
+        setTimeout(() => {
+          reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+      } else if (reviewSectionRef.current && !isFetchingReviews) {
+        // Yorumlar yoksa bile scroll yap
+        setTimeout(() => {
+          reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+      }
     }
-  }
+  }, [location.hash, product, isFetchingReviews, reviews.length])
 
-  // Mouse leave'de devam et
-  const handleImageLeave = () => {
-    isPausedRef.current = false
-    if (allImages.length > 1 && !intervalRef.current) {
-      intervalRef.current = setInterval(() => {
-        setSelectedImage((prevIndex) => {
-          const nextIndex = (prevIndex + 1) % allImages.length
-          return nextIndex
-        })
-      }, 5000)
+  const handleScrollToReviews = useCallback(() => {
+    if (reviewSectionRef.current) {
+      reviewSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
-  }
+  }, [])
 
-  if (!product) {
-    return (
-      <div className="product-not-found">
-        <h2>Ürün bulunamadı</h2>
-        <Link to="/">Ana Sayfaya Dön</Link>
-      </div>
-    )
-  }
+  const formatReviewDate = useCallback((value) => {
+    if (!value) return ''
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toLocaleDateString('tr-TR')
+  }, [])
 
-  // Fiyat hesaplama
-  const calculatePrice = (enValue, boyValue, pileValue) => {
-    if (!enValue || !boyValue || !pileValue) {
+  const fetchReviews = useCallback(async ({ page = 0, reset = false } = {}) => {
+    if (!product?.id) return Promise.resolve()
+    setIsFetchingReviews(true)
+    if (reset) {
+      setReviewError('')
+    }
+
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: '6',
+        sort: reviewSortOption,
+        withImagesOnly: withImageReviewsOnly ? 'true' : 'false'
+      })
+
+      const response = await fetch(`${API_BASE_URL}/reviews/product/${product.id}/page?${params.toString()}`)
+      if (!response.ok) {
+        throw new Error('Yorumlar getirilemedi.')
+      }
+
+      const payload = await response.json()
+      if (!(payload?.isSuccess || payload?.success)) {
+        throw new Error(payload?.message || 'Yorumlar getirilemedi.')
+      }
+
+      const pageData = payload?.data || {}
+      setReviews(prev => reset ? (pageData.items || []) : [...prev, ...(pageData.items || [])])
+      setReviewSummary(pageData.summary || null)
+      setReviewPageMeta({
+        page: pageData.page ?? page,
+        size: pageData.size ?? 6,
+        hasNext: pageData.hasNext ?? false,
+        totalElements: pageData.totalElements ?? 0,
+        totalPages: pageData.totalPages ?? 0
+      })
+      return Promise.resolve()
+    } catch (error) {
+      console.error('Yorumlar yüklenirken hata:', error)
+      setReviewError(error.message || 'Yorumlar yüklenirken bir hata oluştu.')
+      return Promise.reject(error)
+    } finally {
+      setIsFetchingReviews(false)
+    }
+  }, [product?.id, reviewSortOption, withImageReviewsOnly])
+
+  useEffect(() => {
+    if (!product?.id) return
+    setReviews([])
+    setReviewSummary(null)
+    setReviewPageMeta(prev => ({
+      ...prev,
+      page: 0,
+      hasNext: true,
+      totalElements: 0,
+      totalPages: 0
+    }))
+    fetchReviews({ page: 0, reset: true }).then(() => {
+      // Yorumlar yüklendikten sonra, eğer #reviews hash'i varsa scroll yap
+      if (location.hash === '#reviews' && reviewSectionRef.current) {
+        setTimeout(() => {
+          reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 300)
+      }
+    }).catch(() => {
+      // Hata olsa bile scroll yap
+      if (location.hash === '#reviews' && reviewSectionRef.current) {
+        setTimeout(() => {
+          reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 300)
+      }
+    })
+  }, [product?.id, reviewSortOption, withImageReviewsOnly, fetchReviews, location.hash])
+
+  useEffect(() => {
+    const observerTarget = loadMoreReviewsRef.current
+    if (!observerTarget || !reviewPageMeta.hasNext) return
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && !isFetchingReviews) {
+        fetchReviews({ page: reviewPageMeta.page + 1, reset: false })
+      }
+    }, { rootMargin: '200px' })
+
+    observer.observe(observerTarget)
+    return () => observer.disconnect()
+  }, [reviewPageMeta.hasNext, reviewPageMeta.page, isFetchingReviews, fetchReviews])
+
+  // Tüm ürünleri çek (ilgili ürünler için)
+  useEffect(() => {
+    const fetchAllProducts = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/products`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.isSuccess || data.success) {
+            const productsData = data.data || []
+            const formattedProducts = productsData.map(p => ({
+              id: p.id,
+              name: p.name,
+              price: p.price ? parseFloat(p.price) : 0,
+              image: p.coverImageUrl || '/images/perde1kapak.jpg',
+              description: p.description || '',
+              category: p.category?.name || 'Genel',
+              inStock: (p.quantity || 0) > 0,
+            }))
+            setAllProducts(formattedProducts)
+          }
+        }
+      } catch (error) {
+        console.error('Ürünler yüklenirken hata:', error)
+      }
+    }
+    fetchAllProducts()
+  }, [])
+
+  // Ana fotoğraf sabit kalacak, geçiş yok
+
+  // Fallback fiyat hesaplama (backend'e ulaşılamazsa)
+  const calculatePriceFallback = React.useCallback((enNum, pileValue) => {
+    if (!product || !product.price) {
+      setCalculatedPrice(0)
+      return
+    }
+    
+    // Pile çarpanını parse et (1x2 -> 2, 1x3 -> 3, 1x1 -> 1)
+    let pileMultiplier = 1
+    try {
+      const parts = pileValue.split('x')
+      if (parts.length === 2) {
+        pileMultiplier = parseFloat(parts[1])
+        if (isNaN(pileMultiplier)) pileMultiplier = 1
+      }
+    } catch (e) {
+      pileMultiplier = 1
+    }
+    
+    // Backend ile aynı mantık: metreCinsindenEn * pileCarpani * pricePerMeter
+    const enMetre = enNum / 100.0
+    const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0
+    const calculated = price * enMetre * pileMultiplier
+    setCalculatedPrice(Math.round(calculated * 100) / 100) // 2 ondalık basamak
+  }, [product])
+
+  // Backend'den fiyat hesaplama
+  const calculatePrice = React.useCallback(async (enValue, boyValue, pileValue) => {
+    if (!enValue || !boyValue || !pileValue || !product || !product.id) {
       setCalculatedPrice(0)
       return
     }
@@ -149,35 +723,192 @@ const ProductDetail = () => {
       setCalculatedPrice(0)
       return
     }
-    
-    // Pile sıklığı çarpanı
-    const pileMultiplier = {
-      'pilesiz': 1,
-      '1x2': 2,
-      '1x3': 3
-    }[pileValue] || 1
-    
-    // Metre fiyatı * en (metre cinsinden) * pile çarpanı
-    // En değeri cm cinsinden olduğu için 100'e bölüyoruz
-    const enMetre = enNum / 100
-    const calculated = product.price * enMetre * pileMultiplier
-    
-    setCalculatedPrice(Math.round(calculated * 100) / 100) // 2 ondalık basamak
-  }
-  
-  // Form değişikliklerinde fiyatı hesapla
-  useEffect(() => {
-    if (product) {
-      calculatePrice(en, boy, pileSikligi)
+
+    setIsCalculatingPrice(true)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/${product.id}/calculate-price`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          width: enNum,
+          height: boyNum,
+          pleatType: pileValue,
+          price: product.price
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.isSuccess || data.success) {
+          const calculatedPriceValue = parseFloat(data.data.calculatedPrice)
+          setCalculatedPrice(isNaN(calculatedPriceValue) ? 0 : calculatedPriceValue)
+        } else {
+          // Backend hatası durumunda fallback hesaplama
+          calculatePriceFallback(enNum, pileValue)
+        }
+      } else {
+        // HTTP hatası durumunda fallback hesaplama
+        calculatePriceFallback(enNum, pileValue)
+      }
+    } catch (error) {
+      console.error('Fiyat hesaplama hatası:', error)
+      // Hata durumunda fallback hesaplama
+      calculatePriceFallback(enNum, pileValue)
+    } finally {
+      setIsCalculatingPrice(false)
     }
-  }, [en, boy, pileSikligi, product])
+  }, [product, calculatePriceFallback])
   
-  const handleAddToCart = (e) => {
+  // Validasyon fonksiyonu
+  const validateMeasurement = (field, value) => {
+    if (!value || value.trim() === '') {
+      return { isValid: false, message: '' }
+    }
+    
+    const numValue = parseFloat(value)
+    if (isNaN(numValue)) {
+      return { isValid: false, message: 'Lütfen geçerli bir sayı giriniz.' }
+    }
+    
+    if (field === 'en') {
+      if (numValue < 50) {
+        return { isValid: false, message: 'Genişlik en az 50 cm olmalıdır.' }
+      }
+      if (numValue > 1000) {
+        return { isValid: false, message: 'Genişlik en fazla 1000 cm olabilir.' }
+      }
+    } else if (field === 'boy') {
+      if (numValue < 30) {
+        return { isValid: false, message: 'Yükseklik en az 30 cm olmalıdır.' }
+      }
+      if (numValue > 270) {
+        return { isValid: false, message: 'Yükseklik en fazla 270 cm olabilir.' }
+      }
+    }
+    
+    return { isValid: true, message: '' }
+  }
+
+  // Form değişikliklerinde fiyatı hesapla ve validasyon yap
+  useEffect(() => {
+    // Validasyon
+    const enValidation = validateMeasurement('en', en)
+    const boyValidation = validateMeasurement('boy', boy)
+    
+    setFormErrors({
+      en: enValidation.message,
+      boy: boyValidation.message
+    })
+    
+    if (product && product.id && en && boy && pileSikligi && enValidation.isValid && boyValidation.isValid) {
+      // Debounce ile backend'e istek at
+      const timeoutId = setTimeout(() => {
+        calculatePrice(en, boy, pileSikligi)
+      }, 500) // 500ms bekle
+
+      return () => clearTimeout(timeoutId)
+    } else {
+      setCalculatedPrice(0)
+    }
+  }, [en, boy, pileSikligi, product?.id, product?.price, calculatePrice])
+
+  const totalReviewCount = reviewSummary?.totalReviewCount ?? product?.reviewCount ?? 0
+  const derivedAverageRating = reviewSummary?.averageRating ?? product?.averageRating ?? 0
+  const imageReviewCount = reviewSummary?.imageReviewCount ?? 0
+  const ratingBars = useMemo(() => {
+    const breakdown = reviewSummary?.breakdown || {}
+    const segments = [
+      { label: '5', count: breakdown.fiveStars || 0 },
+      { label: '4', count: breakdown.fourStars || 0 },
+      { label: '3', count: breakdown.threeStars || 0 },
+      { label: '2', count: breakdown.twoStars || 0 },
+      { label: '1', count: breakdown.oneStar || 0 }
+    ]
+    const total = segments.reduce((sum, item) => sum + item.count, 0) || totalReviewCount
+    return segments.map(item => ({
+      ...item,
+      percentage: total ? Math.round((item.count / total) * 100) : 0
+    }))
+  }, [reviewSummary, totalReviewCount])
+
+  // Structured Data for Product - useMemo ile sarmala
+  const structuredData = useMemo(() => {
+    if (!product || !product.id || !product.name || !product.price) return null
+    
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: `${product.name || 'Ürün'} - Perde Satış`,
+      description: `${product.description || ''} Perde satış için Hiedra'yı ziyaret edin. Kaliteli kumaş, uygun fiyat, hızlı teslimat.`,
+      image: product.image ? (product.image.startsWith('http') ? product.image : `${typeof window !== 'undefined' ? window.location.origin : 'https://hiedra.com'}${product.image}`) : '/images/perde1kapak.jpg',
+      sku: `PROD-${product.id}`,
+      mpn: `HIEDRA-${product.id}`,
+      category: `${product.category || 'Genel'} Perde`,
+      brand: {
+        '@type': 'Brand',
+        name: 'Hiedra Perde'
+      },
+      manufacturer: {
+        '@type': 'Organization',
+        name: 'Hiedra Perde'
+      },
+      offers: {
+        '@type': 'Offer',
+        url: typeof window !== 'undefined' ? window.location.href : `https://hiedra.com/product/${product.id}`,
+        priceCurrency: 'TRY',
+        price: (typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0).toString(),
+        priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        itemCondition: 'https://schema.org/NewCondition',
+        seller: {
+          '@type': 'Organization',
+          name: 'Hiedra Perde'
+        },
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          priceCurrency: 'TRY',
+          price: (typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0).toString(),
+          unitCode: 'MTR',
+          unitText: 'metre'
+        }
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: (product.averageRating || derivedAverageRating || 4.8).toString(),
+        reviewCount: (product.reviewCount || totalReviewCount || 0).toString(),
+        bestRating: '5',
+        worstRating: '1'
+      },
+      review: product.reviewCount > 0 ? [
+        {
+          '@type': 'Review',
+          reviewRating: {
+            '@type': 'Rating',
+            ratingValue: (product.averageRating || 5).toString(),
+            bestRating: '5'
+          },
+          author: {
+            '@type': 'Person',
+            name: 'Müşteri'
+          },
+          reviewBody: `${product.name || 'Ürün'} ürünü kaliteli ve hızlı teslimat ile memnun kaldık.`
+        }
+      ] : []
+    }
+  }, [product])
+
+  // Sepete ekleme handler'ı
+  const handleAddToCart = React.useCallback(async (e) => {
     e.preventDefault()
+    setAddToCartError('')
+    setAddToCartSuccess(false)
     
     // Validasyon
     if (!en || !boy) {
-      alert('Lütfen en ve boy değerlerini giriniz.')
+      setAddToCartError('Lütfen en ve boy değerlerini giriniz.')
       return
     }
     
@@ -185,95 +916,100 @@ const ProductDetail = () => {
     const boyNum = parseFloat(boy)
     
     if (isNaN(enNum) || isNaN(boyNum)) {
-      alert('Lütfen geçerli sayısal değerler giriniz.')
+      setAddToCartError('Lütfen geçerli sayısal değerler giriniz.')
       return
     }
     
-    if (enNum <= 0 || enNum > 30000) {
-      alert('En değeri 0 ile 30000 cm arasında olmalıdır.')
+    if (enNum < 50 || enNum > 1000) {
+      setAddToCartError('Genişlik değeri 50 ile 1000 cm arasında olmalıdır.')
       return
     }
     
-    if (boyNum <= 0 || boyNum > 500) {
-      alert('Boy değeri 0 ile 500 cm arasında olmalıdır.')
+    if (boyNum < 30 || boyNum > 270) {
+      setAddToCartError('Yükseklik değeri 30 ile 270 cm arasında olmalıdır.')
       return
     }
     
-    // Sepete ekle
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product, {
-        en: enNum,
-        boy: boyNum,
-        pileSikligi,
-        calculatedPrice,
-        quantity: 1
+    if (!product || !product.id) {
+      setAddToCartError('Ürün bilgisi bulunamadı.')
+      return
+    }
+
+    setIsAddingToCart(true)
+
+    try {
+      // Giriş yapmış kullanıcı için guestUserId gönderme, sadece accessToken gönder
+      // Guest kullanıcılar için guestUserId gönder
+      let guestUserId = null
+      if (!accessToken) {
+        guestUserId = localStorage.getItem('guestUserId')
+        if (!guestUserId) {
+          guestUserId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+          localStorage.setItem('guestUserId', guestUserId)
+        }
+      }
+
+      // Backend'e sepete ekleme isteği
+      const response = await fetch(`${API_BASE_URL}/cart/items${guestUserId ? `?guestUserId=${guestUserId}` : ''}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken && { 'Authorization': `Bearer ${accessToken}` })
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: quantity,
+          width: enNum,
+          height: boyNum,
+          pleatType: pileSikligi
+        })
       })
+
+      const data = await response.json()
+
+      if (response.ok && (data.isSuccess || data.success)) {
+        // Backend'den sepeti yeniden yükle
+        if (refreshCart) {
+          await refreshCart()
+        }
+        
+        setAddToCartSuccess(true)
+        // Başarı mesajı göster, sayfa değişimi yok
+      } else {
+        throw new Error(data.message || 'Ürün sepete eklenemedi')
+      }
+    } catch (error) {
+      console.error('Sepete ekleme hatası:', error)
+      setAddToCartError(error.message || 'Ürün sepete eklenirken bir hata oluştu. Lütfen tekrar deneyin.')
+      // Fallback mekanizması kaldırıldı - sadece API ile çalışıyoruz
+    } finally {
+      setIsAddingToCart(false)
     }
-    
-    navigate('/cart')
+  }, [product, quantity, en, boy, pileSikligi, calculatedPrice, accessToken, refreshCart])
+  
+  // Early returns - tüm hooks'tan sonra
+  if (isLoading) {
+    return (
+      <div className="product-detail-container">
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p>Ürün bilgileri yükleniyor...</p>
+        </div>
+      </div>
+    )
   }
 
-  // Structured Data for Product
-  const structuredData = product ? {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: `${product.name} - Perde Satış`,
-    description: `${product.description} Perde satış için Hiedra'yı ziyaret edin. Kaliteli kumaş, uygun fiyat, hızlı teslimat.`,
-    image: allImages.map(img => img.startsWith('http') ? img : `${typeof window !== 'undefined' ? window.location.origin : 'https://hiedra.com'}${img}`),
-    sku: `PROD-${product.id}`,
-    mpn: `HIEDRA-${product.id}`,
-    category: `${product.category} Perde`,
-    brand: {
-      '@type': 'Brand',
-      name: 'Hiedra Perde'
-    },
-    manufacturer: {
-      '@type': 'Organization',
-      name: 'Hiedra Perde'
-    },
-    offers: {
-      '@type': 'Offer',
-      url: typeof window !== 'undefined' ? window.location.href : `https://hiedra.com/product/${product.id}`,
-      priceCurrency: 'TRY',
-      price: product.price.toString(),
-      priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      itemCondition: 'https://schema.org/NewCondition',
-      seller: {
-        '@type': 'Organization',
-        name: 'Hiedra Perde'
-      },
-      priceSpecification: {
-        '@type': 'UnitPriceSpecification',
-        priceCurrency: 'TRY',
-        price: product.price.toString(),
-        unitCode: 'MTR',
-        unitText: 'metre'
-      }
-    },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      reviewCount: '127',
-      bestRating: '5',
-      worstRating: '1'
-    },
-    review: [
-      {
-        '@type': 'Review',
-        reviewRating: {
-          '@type': 'Rating',
-          ratingValue: '5',
-          bestRating: '5'
-        },
-        author: {
-          '@type': 'Person',
-          name: 'Müşteri'
-        },
-        reviewBody: `${product.name} ürünü kaliteli ve hızlı teslimat ile memnun kaldık.`
-      }
-    ]
-  } : null
+  if (!product) {
+    return (
+      <div className="product-detail-container">
+        <div className="product-not-found">
+          <h2>Ürün bulunamadı</h2>
+          <p>Aradığınız ürün mevcut değil veya silinmiş olabilir.</p>
+          <Link to="/" className="back-to-home-btn">Ana Sayfaya Dön</Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="product-detail-container">
@@ -288,108 +1024,446 @@ const ProductDetail = () => {
           structuredData={structuredData}
         />
       )}
-      <div className="product-detail-wrapper">
-        {/* Üst Badge - Kategori */}
-        <div className="product-detail-badge-container">
-          <span className="product-detail-badge category-badge-top">
-            {product.category}
-          </span>
-          {product.inStock && (
-            <span className="product-detail-badge stock-badge-top">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Stokta
-            </span>
-          )}
-        </div>
+      {product && (
+        <div className="product-detail-wrapper" ref={detailWrapperRef}>
+          {/* Kategori Adı - Sayfanın En Üstü */}
+          <div className="product-category-top">
+            <span className="product-category-top-text">{product.category || 'Genel'}</span>
+          </div>
+
+          {/* Ürün Adı - Kategori Altında, Fotoğraf Üstünde */}
+          <div className="product-name-top">
+            <h1 className="product-name-top-text">{product.name}</h1>
+          </div>
 
         <div className="product-detail-content">
           <section className="product-detail-images">
-            {/* Sol üstte - Detay thumbnailleri */}
-            {allImages.length > 1 && (
-              <div className="product-side-thumbnails-inside">
-                {allImages.slice(0, 3).map((img, index) => (
-                  <button
-                    key={index}
-                    className={`side-thumbnail-inside ${selectedImage === index ? 'active' : ''}`}
-                    onClick={() => handleThumbnailClick(index)}
-                    onMouseEnter={() => setSelectedImage(index)}
-                  >
-                    <LazyImage 
-                      src={img} 
-                      alt={`${product.name} - ${product.category} perde detay görüntüsü ${index + 1}`}
-                      className="thumbnail-image"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div 
-              className="main-image-container"
-              onMouseEnter={handleImageHover}
-              onMouseLeave={handleImageLeave}
-            >
-              <LazyImage 
-                src={allImages[selectedImage]} 
-                alt={`${product.name} - ${product.category} perde modeli. ${product.description.substring(0, 120)}`}
-                className="main-image"
-              />
-              <div className="image-gradient-overlay"></div>
-              <div className="image-count-indicator">
-                {selectedImage + 1} / {allImages.length}
+            <div className="product-image-section-home">
+                  <div className="product-image-wrapper">
+                <div 
+                  className={`main-product-image-wrapper-home fade-in ${isImageBlurred ? 'detail-modal-blurred' : ''}`}
+                  ref={mainImageWrapperRef}
+                >
+                  <LazyImage
+                    src={currentImage || ''}
+                    alt={`${product.name} - ${product.category} perde modeli - Görsel ${activeImageIndex + 1}`}
+                    className="main-product-image-home"
+                    isLCP={true}
+                    fetchPriority="high"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+                    width={800}
+                    height={800}
+                  />
+                  {/* Detay fotoğraf önizleme */}
+                  {detailImage && (
+                    <div 
+                      className="detail-image-preview-home"
+                      onClick={(e) => handleDetailPreviewClick(e, detailImage)}
+                      title="Detay fotoğrafını görüntüle"
+                    >
+                      <LazyImage
+                        src={detailImage}
+                        alt={`${product.name} detay fotoğrafı`}
+                        className="detail-image-preview-img-home"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               
-              {allImages.length > 1 && (
-                <div className="auto-slide-indicator">
-                  <div className="slide-progress-bar">
-                    <div 
-                      className="slide-progress-fill"
-                      key={selectedImage}
-                    ></div>
-                  </div>
-                </div>
-              )}
-
-              {/* Sağ altta detay fotoğrafı butonu */}
-              {allImages.length > 3 && (
-                <button 
-                  className="detail-photo-btn-inside"
-                  onClick={() => setSelectedImage(allImages.length > 3 ? 3 : allImages.length - 1)}
-                  title="Detay fotoğrafı görüntüle"
+              {/* Sepete Ekle Butonu - Fotoğrafın Altında */}
+              <div className="product-actions-home">
+                <button
+                  className="open-pricing-modal-btn-home"
+                  onClick={openPricingModal}
                 >
-                  <LazyImage 
-                    src={allImages[allImages.length > 3 ? 3 : allImages.length - 1]} 
-                    alt="Detay görüntüle"
-                    className="detail-thumbnail"
-                  />
-                  <div className="detail-btn-overlay">
-                    <svg className="zoom-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="11" cy="11" r="8" />
-                      <path d="m21 21-4.35-4.35" />
-                      <line x1="11" y1="8" x2="11" y2="14" />
-                      <line x1="8" y1="11" x2="14" y2="11" />
-                    </svg>
-                    <span>Detay Gör</span>
-                  </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="9" cy="21" r="1" />
+                    <circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                  </svg>
+                  Sepete Ekle
                 </button>
-              )}
+              </div>
+              
+              {/* Fiyatlandırma Modal */}
+              {isPricingModalOpen && product && (
+                  <div 
+                    className="pricing-modal-overlay-home"
+                    onClick={closePricingModal}
+                  >
+                    <div 
+                      className="pricing-modal-content-home"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button 
+                        className="pricing-modal-close-home"
+                        onClick={closePricingModal}
+                        aria-label="Kapat"
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                      
+                      <div className="pricing-modal-header-home">
+                        <h3 className="pricing-modal-title-home">Özel Fiyatlandırma</h3>
+                        <p className="pricing-modal-subtitle-home">{product.name}</p>
+                      </div>
+                      
+                      <div className="pricing-modal-form-home">
+                        <div className="measurement-inputs-home">
+                          <div className="measurement-input-group-home">
+                            <label htmlFor="modal-en">
+                              Genişlik (cm) <span className="required">*</span>
+                              <span className="form-hint">Min: 50 cm, Max: 1000 cm</span>
+                            </label>
+                            <input
+                              id="modal-en"
+                              type="number"
+                              min="50"
+                              max="1000"
+                              step="0.1"
+                              placeholder="Örn: 200"
+                              value={modalMeasurements.en || ''}
+                              onChange={(e) => handleModalMeasurementChange('en', e.target.value)}
+                              className={`measurement-input-home ${modalErrors.en ? 'input-error' : ''}`}
+                              required
+                            />
+                            {modalErrors.en && (
+                              <span className="error-message-home">{modalErrors.en}</span>
+                            )}
+                          </div>
+                          <div className="measurement-input-group-home">
+                            <label htmlFor="modal-boy">
+                              Yükseklik (cm) <span className="required">*</span>
+                              <span className="form-hint">Min: 30 cm, Max: 270 cm</span>
+                            </label>
+                            <input
+                              id="modal-boy"
+                              type="number"
+                              min="30"
+                              max="270"
+                              step="0.1"
+                              placeholder="Örn: 250"
+                              value={modalMeasurements.boy || ''}
+                              onChange={(e) => handleModalMeasurementChange('boy', e.target.value)}
+                              className={`measurement-input-home ${modalErrors.boy ? 'input-error' : ''}`}
+                              required
+                            />
+                            {modalErrors.boy && (
+                              <span className="error-message-home">{modalErrors.boy}</span>
+                            )}
+                          </div>
+                          <div className="measurement-input-group-home">
+                            <label htmlFor="modal-pile">
+                              Pile Sıklığı <span className="required">*</span>
+                            </label>
+                            <div className="custom-dropdown-home">
+                              <button
+                                type="button"
+                                className="dropdown-trigger-home"
+                                onClick={() => setIsModalDropdownOpen(!isModalDropdownOpen)}
+                                onBlur={() => setTimeout(() => setIsModalDropdownOpen(false), 200)}
+                              >
+                                <span className="dropdown-selected-home">
+                                  {pileOptions.find(opt => opt.value === (modalMeasurements.pileSikligi || '1x1'))?.label || pileOptions[0].label}
+                                </span>
+                                <svg 
+                                  className={`dropdown-arrow-home ${isModalDropdownOpen ? 'open' : ''}`}
+                                  width="20" 
+                                  height="20" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2"
+                                >
+                                  <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                              </button>
+                              {isModalDropdownOpen && (
+                                <div className="dropdown-menu-home">
+                                  {pileOptions.map(option => (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      className="dropdown-option-home"
+                                      onClick={() => {
+                                        handleModalMeasurementChange('pileSikligi', option.value)
+                                        setIsModalDropdownOpen(false)
+                                      }}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {isModalCalculatingPrice && (
+                          <div className="price-calculating-home">
+                            <span>Fiyat hesaplanıyor...</span>
+                          </div>
+                        )}
+                        
+                        {modalCalculatedPrice > 0 && (
+                          <div className="calculated-price-section-home">
+                            <div className="price-breakdown-home">
+                              <span>Toplam Fiyat:</span>
+                              <span className="price-value-home">{modalCalculatedPrice.toFixed(2)} ₺</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {modalErrors.general && (
+                          <div className="error-message-home" style={{ marginTop: '1rem' }}>
+                            {modalErrors.general}
+                          </div>
+                        )}
+                        
+                        <button
+                          className="add-to-cart-btn-home"
+                          onClick={handleModalAddToCart}
+                          disabled={
+                            !modalMeasurements.en || 
+                            !modalMeasurements.boy || 
+                            !!modalErrors.en ||
+                            !!modalErrors.boy ||
+                            isAddingToCart
+                          }
+                        >
+                          {isAddingToCart ? (
+                            <>
+                              <svg className="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{
+                                animation: 'spin 1s linear infinite',
+                                marginRight: '0.5rem'
+                              }}>
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                              </svg>
+                              Ekleniyor...
+                            </>
+                          ) : (
+                            <>
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="9" cy="21" r="1" />
+                                <circle cx="20" cy="21" r="1" />
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                              </svg>
+                              Sepete Ekle
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
             </div>
+            
+            {/* Ürün Açıklaması - Fotoğrafların Altında */}
+            {product.description && (
+              <div className="product-description-section-detail">
+                <h3 className="product-description-title">Ürün Açıklaması</h3>
+                <p className="product-description-text">
+                  {product.description}
+                </p>
+              </div>
+            )}
+            
+            {/* Ürün Özellikleri - Fotoğrafların Altında */}
+            {(product.mountingType || product.material || product.lightTransmittance || 
+              product.pieceCount || product.color || product.usageArea || product.pleatType || 
+              (product.width && product.height)) && (
+              <div className="product-specifications-detail">
+                <h3 className="specifications-title-detail">Ürün Özellikleri</h3>
+                <div className="specifications-grid-detail">
+                  {product.mountingType && (
+                    <div className="spec-item-detail">
+                      <div className="spec-icon-wrapper-detail">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                          <polyline points="9 22 9 12 15 12 15 22" />
+                        </svg>
+                      </div>
+                      <div className="spec-content-detail">
+                        <span className="spec-label-detail">Takma Şekli</span>
+                        <span className="spec-value-detail">{product.mountingType}</span>
+                      </div>
+                    </div>
+                  )}
+                  {product.material && (
+                    <div className="spec-item-detail">
+                      <div className="spec-icon-wrapper-detail">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <line x1="3" y1="9" x2="21" y2="9" />
+                          <line x1="9" y1="21" x2="9" y2="9" />
+                        </svg>
+                      </div>
+                      <div className="spec-content-detail">
+                        <span className="spec-label-detail">Materyal</span>
+                        <span className="spec-value-detail">{product.material}</span>
+                      </div>
+                    </div>
+                  )}
+                  {product.pleatType && (
+                    <div className="spec-item-detail">
+                      <div className="spec-icon-wrapper-detail">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M3 12h18M3 6h18M3 18h18" />
+                        </svg>
+                      </div>
+                      <div className="spec-content-detail">
+                        <span className="spec-label-detail">Pile</span>
+                        <span className="spec-value-detail">{product.pleatType}</span>
+                      </div>
+                    </div>
+                  )}
+                  {product.lightTransmittance && (
+                    <div className="spec-item-detail">
+                      <div className="spec-icon-wrapper-detail">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="5" />
+                          <line x1="12" y1="1" x2="12" y2="3" />
+                          <line x1="12" y1="21" x2="12" y2="23" />
+                          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                          <line x1="1" y1="12" x2="3" y2="12" />
+                          <line x1="21" y1="12" x2="23" y2="12" />
+                          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                        </svg>
+                      </div>
+                      <div className="spec-content-detail">
+                        <span className="spec-label-detail">Işık Geçirgenliği</span>
+                        <span className="spec-value-detail">{product.lightTransmittance}</span>
+                      </div>
+                    </div>
+                  )}
+                  {product.pieceCount && (
+                    <div className="spec-item-detail">
+                      <div className="spec-icon-wrapper-detail">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="7" height="7" />
+                          <rect x="14" y="3" width="7" height="7" />
+                          <rect x="14" y="14" width="7" height="7" />
+                          <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                      </div>
+                      <div className="spec-content-detail">
+                        <span className="spec-label-detail">Parça Sayısı</span>
+                        <span className="spec-value-detail">{product.pieceCount} Adet</span>
+                      </div>
+                    </div>
+                  )}
+                  {product.color && (
+                    <div className="spec-item-detail">
+                      <div className="spec-icon-wrapper-detail">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+                        </svg>
+                      </div>
+                      <div className="spec-content-detail">
+                        <span className="spec-label-detail">Renk</span>
+                        <div className="spec-color-display-detail">
+                          <div 
+                            className="color-swatch-detail"
+                            style={{ 
+                              backgroundColor: getColorHex(product.color) || '#ccc',
+                              border: `2px solid ${getColorHex(product.color) || '#ccc'}`
+                            }}
+                            title={product.color}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {product.width && product.height && (
+                    <div className="spec-item-detail">
+                      <div className="spec-icon-wrapper-detail">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                        </svg>
+                      </div>
+                      <div className="spec-content-detail">
+                        <span className="spec-label-detail">Beden</span>
+                        <span className="spec-value-detail">{product.width} x {product.height} cm</span>
+                      </div>
+                    </div>
+                  )}
+                  {product.usageArea && (
+                    <div className="spec-item-detail">
+                      <div className="spec-icon-wrapper-detail">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                      </div>
+                      <div className="spec-content-detail">
+                        <span className="spec-label-detail">Kullanım Alanı</span>
+                        <span className="spec-value-detail">{product.usageArea}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
 
           <article className="product-detail-info">
             <div className="product-header-info">
-              <span className="product-category">{product.category}</span>
-              <h1 className="product-name">{product.name}</h1>
               {product.productCode && (
                 <span className="product-code">Ürün Kodu: <strong>{product.productCode}</strong></span>
               )}
+              
+              {/* Yıldız Puanı ve Yorum Sayısı */}
+              {totalReviewCount > 0 && (
+                <div className="product-rating-section">
+                  <div className="rating-stars">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const rating = derivedAverageRating || 0
+                      const filled = star <= Math.floor(rating)
+                      return (
+                        <svg
+                          key={star}
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill={filled ? "#FFD700" : "none"}
+                          stroke={filled ? "#FFD700" : "#ddd"}
+                          strokeWidth="2"
+                        >
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                      )
+                    })}
+                    {derivedAverageRating > 0 && (
+                      <span className="rating-value">{derivedAverageRating.toFixed(1)}</span>
+                    )}
+                  </div>
+                  <span className="review-count">
+                    ({totalReviewCount} {totalReviewCount === 1 ? 'yorum' : 'yorum'})
+                  </span>
+                  <button type="button" className="reviews-anchor-btn" onClick={handleScrollToReviews}>
+                    Yorumları Gör
+                  </button>
+                </div>
+              )}
+              
+              {/* Fiyat - Header'ın hemen altında */}
+              <div className="detail-price-section-top">
+                <div className="price-info-top">
+                  <span className="price-label-top">Metre Fiyatı:</span>
+                  <span className="detail-price-top">{product.price.toFixed(2)} ₺</span>
+                </div>
+              </div>
             </div>
             
-            <p className="product-description">{product.description}</p>
             
-            {/* Ürün Özellikleri */}
+            {/* Genel Özellikler */}
             <div className="product-features">
               <div className="feature-item">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -413,260 +1487,291 @@ const ProductDetail = () => {
                 <span>Uygun Fiyat</span>
               </div>
             </div>
-            
-            <div className="detail-price-section">
-              <div className="price-info">
-                <span className="price-label">Metre Fiyatı:</span>
-                <span className="detail-price">{product.price} ₺</span>
-              </div>
-              {product.inStock && (
-                <span className="detail-stock">Stokta</span>
-              )}
-            </div>
-
-          {/* Fiyatlandırma Formu */}
-          <form className="pricing-form" onSubmit={handleAddToCart}>
-            <div className="form-section">
-              <h2 className="form-title">Özel Fiyatlandırma</h2>
-              
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="en">
-                    En (cm) <span className="required">*</span>
-                    <span className="form-hint">Max: 30000 cm</span>
-                  </label>
-                  <input
-                    type="number"
-                    id="en"
-                    value={en}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= 30000)) {
-                        setEn(value)
-                      }
-                    }}
-                    min="0"
-                    max="30000"
-                    step="0.1"
-                    placeholder="Örn: 200"
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="boy">
-                    Boy (cm) <span className="required">*</span>
-                    <span className="form-hint">Max: 500 cm</span>
-                  </label>
-                  <input
-                    type="number"
-                    id="boy"
-                    value={boy}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= 500)) {
-                        setBoy(value)
-                      }
-                    }}
-                    min="0"
-                    max="500"
-                    step="0.1"
-                    placeholder="Örn: 250"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="pileSikligi">
-                  Pile Sıklığı <span className="required">*</span>
-                </label>
-                <div className="custom-dropdown">
-                  <button
-                    type="button"
-                    className="dropdown-trigger"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                  >
-                    <span className="dropdown-selected">
-                      {pileOptions.find(opt => opt.value === pileSikligi)?.label}
-                    </span>
-                    <svg 
-                      className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}
-                      width="20" 
-                      height="20" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2.5"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                  {isDropdownOpen && (
-                    <div className="dropdown-menu">
-                      {pileOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          className={`dropdown-option ${pileSikligi === option.value ? 'selected' : ''}`}
-                          onClick={() => {
-                            setPileSikligi(option.value)
-                            setIsDropdownOpen(false)
-                          }}
-                        >
-                          <span className="option-label">{option.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <p className="form-info">
-                  Pile sıklığı fiyatlandırmayı etkiler: Pilesiz (x1), 1x2 (x2), 1x3 (x3)
-                </p>
-              </div>
-              
-              {calculatedPrice > 0 && (
-                <div className="calculated-price-section">
-                  <div className="price-breakdown">
-                    <div className="breakdown-item">
-                      <span>Metre Fiyatı:</span>
-                      <span>{product.price} ₺</span>
-                    </div>
-                    <div className="breakdown-item">
-                      <span>En:</span>
-                      <span>{en} cm ({parseFloat(en) / 100} m)</span>
-                    </div>
-                    <div className="breakdown-item">
-                      <span>Pile Çarpanı:</span>
-                      <span>{pileSikligi === 'pilesiz' ? '1x' : pileSikligi}</span>
-                    </div>
-                    <div className="breakdown-item total">
-                      <span>Toplam Fiyat:</span>
-                      <span className="total-price">{calculatedPrice.toFixed(2)} ₺</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="quantity-section">
-              <label>Adet:</label>
-              <div className="quantity-controls">
-                <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
-                <span>{quantity}</span>
-                <button type="button" onClick={() => setQuantity(quantity + 1)}>+</button>
-              </div>
-            </div>
-
-            <button type="submit" className="add-to-cart-btn" disabled={!en || !boy || calculatedPrice === 0}>
-              Sepete Ekle
-            </button>
-          </form>
         </article>
       </div>
-      </div>
-
-      {/* Benzer Ürünler - Ana kartın dışında, daha görünür */}
-      <section className="related-products-section">
-        <div className="related-products-header">
-          <h2>Benzer Ürünler</h2>
-          <p className="related-products-subtitle">Size uygun diğer perde modellerini keşfedin</p>
-        </div>
-        <div className="related-products-grid">
-          {products
-            .filter(p => p.id !== product.id && p.category === product.category)
-            .slice(0, 3)
-            .map(relatedProduct => (
-              <Link 
-                key={relatedProduct.id} 
-                to={`/product/${relatedProduct.id}`}
-                className="related-product-card"
-              >
-                <div className="related-product-image-wrapper">
-                  <LazyImage 
-                    src={relatedProduct.image}
-                    alt={`${relatedProduct.name} - ${relatedProduct.category} perde satış`}
-                    className="related-product-image"
-                  />
-                  <div className="related-product-overlay">
-                    <span className="related-product-category">{relatedProduct.category}</span>
-                    <span className="related-product-view">Görüntüle →</span>
-                  </div>
-                </div>
-                <div className="related-product-info">
-                  <h3>{relatedProduct.name}</h3>
-                  <p className="related-product-description">{relatedProduct.description.substring(0, 60)}...</p>
-                  <div className="related-product-footer">
-                    <span className="related-product-price">{relatedProduct.price} ₺</span>
-                    {relatedProduct.inStock && (
-                      <span className="related-product-stock">Stokta</span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          {products
-            .filter(p => p.id !== product.id && p.category !== product.category)
-            .slice(0, 3 - products.filter(p => p.id !== product.id && p.category === product.category).length)
-            .map(relatedProduct => (
-              <Link 
-                key={relatedProduct.id} 
-                to={`/product/${relatedProduct.id}`}
-                className="related-product-card"
-              >
-                <div className="related-product-image-wrapper">
-                  <LazyImage 
-                    src={relatedProduct.image}
-                    alt={`${relatedProduct.name} - ${relatedProduct.category} perde satış`}
-                    className="related-product-image"
-                  />
-                  <div className="related-product-overlay">
-                    <span className="related-product-category">{relatedProduct.category}</span>
-                    <span className="related-product-view">Görüntüle →</span>
-                  </div>
-                </div>
-                <div className="related-product-info">
-                  <h3>{relatedProduct.name}</h3>
-                  <p className="related-product-description">{relatedProduct.description.substring(0, 60)}...</p>
-                  <div className="related-product-footer">
-                    <span className="related-product-price">{relatedProduct.price} ₺</span>
-                    {relatedProduct.inStock && (
-                      <span className="related-product-stock">Stokta</span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
-        </div>
-
-        {/* Kategori Linkleri */}
-        <div className="category-links-section">
-          <h3>Diğer Kategoriler</h3>
-          <div className="category-links">
-            <Link to="/" className="category-link">
-              <span>Tüm Ürünler</span>
-              <span className="category-count">({products.length} ürün)</span>
-            </Link>
-            {['Klasik', 'Stor', 'Zebra', 'Jaluzi'].map(category => {
-              const categoryProducts = products.filter(p => p.category === category)
-              return (
-                <Link 
-                  key={category}
-                  to={`/?category=${category.toLowerCase()}`}
-                  className="category-link"
-                >
-                  <span>{category} Perde</span>
-                  <span className="category-count">({categoryProducts.length} ürün)</span>
-                </Link>
-              )
-            })}
+      {isDetailModalOpen && modalImageSrc && (
+        <div 
+          className="detail-modal-overlay-home"
+          onClick={closeDetailModal}
+        >
+          <div 
+            className="detail-modal-content-home"
+            onClick={(e) => e.stopPropagation()}
+            style={detailModalPosition ? {
+              position: 'absolute',
+              top: `${detailModalPosition.top}px`,
+              left: `${detailModalPosition.left}px`,
+              width: `${detailModalPosition.width}px`,
+              height: `${detailModalPosition.height}px`
+            } : {}}
+          >
+            <button 
+              className="detail-modal-close-home"
+              onClick={closeDetailModal}
+              aria-label="Kapat"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+            <LazyImage
+              src={modalImageSrc}
+              alt="Ürün detay"
+              className="detail-modal-image-home"
+            />
           </div>
         </div>
-      </section>
+      )}
+    </div>
+    )}
+
+      {/* Benzer Ürünler Widget - Aynı kategorideki ürünler */}
+      {product && (() => {
+        const similarProducts = allProducts
+          .filter(p => p.id !== product.id && p.category === (product.category || 'Genel'))
+        
+        if (similarProducts.length === 0) return null
+        
+        return (
+          <section className="similar-products-widget">
+            <div className="similar-products-header">
+              <h2 className="similar-products-title">Benzer Ürünler</h2>
+              <p className="similar-products-subtitle">{product.category || 'Genel'} kategorisindeki diğer ürünler</p>
+            </div>
+            <div className="similar-products-scroll-container">
+              <div className="similar-products-scroll">
+                {similarProducts.map(relatedProduct => (
+                  <Link 
+                    key={relatedProduct.id} 
+                    to={`/product/${relatedProduct.id}`}
+                    className="similar-product-item"
+                  >
+                    <div className="similar-product-image-wrapper">
+                      <LazyImage 
+                        src={relatedProduct.image}
+                        alt={relatedProduct.name}
+                        className="similar-product-image"
+                      />
+                    </div>
+                    <div className="similar-product-name">{relatedProduct.name}</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )
+      })()}
+
+      {product && (
+        <section
+          id="reviews-section"
+          ref={reviewSectionRef}
+          className="product-reviews-section"
+        >
+          <div className="reviews-header">
+            <h2 className="reviews-title">Ürün Yorumları</h2>
+          </div>
+            <div className="reviews-summary-card">
+              <div className="reviews-score">
+                <span className="reviews-score-value">{(derivedAverageRating || 0).toFixed(1)}</span>
+                <span className="reviews-score-max">/ 5</span>
+                <span className="reviews-score-text">puan</span>
+                <div className="reviews-score-stars">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <svg
+                      key={`summary-star-${star}`}
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill={star <= Math.round(derivedAverageRating) ? "#FFD700" : "none"}
+                      stroke={star <= Math.round(derivedAverageRating) ? "#FFD700" : "#ddd"}
+                      strokeWidth="2"
+                    >
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  ))}
+                </div>
+              </div>
+            <div className="reviews-meta">
+              <span className="reviews-count-text">
+                {totalReviewCount > 0 ? `${totalReviewCount} değerlendirme` : 'Henüz yorum bulunmuyor'}
+              </span>
+              {imageReviewCount > 0 && (
+                <span className="reviews-image-count">{imageReviewCount} fotoğraflı yorum</span>
+              )}
+            
+            </div>
+          </div>
+            <div className="reviews-summary-extras">
+            <div className="reviews-filters">
+              <label className="reviews-sort-label" htmlFor="review-sort-select">Sırala</label>
+              <select
+                id="review-sort-select"
+                className="reviews-sort-select"
+                value={reviewSortOption}
+                onChange={(e) => setReviewSortOption(e.target.value)}
+              >
+                <option value="LATEST">En Yeni</option>
+                <option value="OLDEST">En Eski</option>
+                <option value="HIGHEST_RATED">En Yüksek Puan</option>
+                <option value="LOWEST_RATED">En Düşük Puan</option>
+                <option value="MOST_HELPFUL">En Faydalı</option>
+              </select>
+              <label className="reviews-checkbox">
+                <input
+                  type="checkbox"
+                  checked={withImageReviewsOnly}
+                  onChange={(e) => setWithImageReviewsOnly(e.target.checked)}
+                />
+                <span>Sadece görselli ({imageReviewCount})</span>
+              </label>
+            </div>
+          </div>
+          {reviewError && (
+            <div className="reviews-error">{reviewError}</div>
+          )}
+          {isFetchingReviews && reviews.length === 0 ? (
+            <div className="reviews-loading">Yorumlar yükleniyor...</div>
+          ) : reviews.length > 0 ? (
+            <div className="reviews-list">
+              {reviews.map((review, index) => {
+                const ratingValue = Number(review.rating) || 0
+                const reviewDate = formatReviewDate(review.createdAt || review.updatedAt)
+                const reviewer = review.reviewer || {}
+                const reviewKey = review.id ?? `${index}-${reviewer.email || 'review'}`
+                return (
+                  <article key={reviewKey} className="review-card">
+                    <div className="review-card-header">
+                      <div className="review-author-meta">
+                        <span className="review-author">{reviewer.name || 'Müşteri'}</span>
+                        {reviewDate && <time className="review-date">{reviewDate}</time>}
+                      </div>
+                      {ratingValue > 0 && (
+                        <div className="review-card-rating">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <svg
+                              key={`${review.id}-${star}`}
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill={star <= Math.round(ratingValue) ? "#FFD700" : "none"}
+                              stroke={star <= Math.round(ratingValue) ? "#FFD700" : "#ddd"}
+                              strokeWidth="2"
+                            >
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                          ))}
+                          <span>{ratingValue.toFixed(1)}</span>
+                        </div>
+                      )}
+                    </div>
+                    {review.comment && (
+                      <p className="review-comment">
+                        {review.comment}
+                      </p>
+                    )}
+                    {review.imageUrls && review.imageUrls.length > 0 && (
+                      <div className="review-image-grid">
+                        {review.imageUrls.map((url, idx) => (
+                          <div
+                            key={`${review.id}-img-${idx}`}
+                            className="review-image-thumb"
+                            aria-label={`Yorum görseli ${idx + 1}`}
+                            onClick={() => handleReviewImageClick(url)}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <LazyImage src={url} alt={`Yorum görseli ${idx + 1}`} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                )
+              })}
+              <div className="reviews-load-more" ref={loadMoreReviewsRef}>
+                {isFetchingReviews && reviews.length > 0 && (
+                  <span>Daha fazla yorum yükleniyor...</span>
+                )}
+                {!reviewPageMeta.hasNext && reviews.length > 0 && (
+                  <span></span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="no-reviews-card">
+              <p>{withImageReviewsOnly ? 'Fotoğraflı yorum bulunamadı.' : 'Bu ürün için henüz yorum paylaşılmadı.'}</p>
+              <span>Satın alma sonrasında deneyiminizi paylaşarak diğer müşterilere destek olabilirsiniz.</span>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Yorum Görseli Modal */}
+      {isReviewImageModalOpen && allReviewImages.length > 0 && (
+        <div 
+          className="review-image-modal-overlay"
+          onClick={closeReviewImageModal}
+        >
+          <button
+            className="review-image-modal-close"
+            onClick={closeReviewImageModal}
+            aria-label="Kapat"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          
+          {allReviewImages.length > 1 && (
+            <>
+              <button
+                className="review-image-modal-nav review-image-modal-prev"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  goToPreviousReviewImage()
+                }}
+                aria-label="Önceki görsel"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <button
+                className="review-image-modal-nav review-image-modal-next"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  goToNextReviewImage()
+                }}
+                aria-label="Sonraki görsel"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </>
+          )}
+
+          <div 
+            className="review-image-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <LazyImage
+              src={allReviewImages[currentReviewImageIndex]}
+              alt={`Yorum görseli ${currentReviewImageIndex + 1} / ${allReviewImages.length}`}
+              className="review-image-modal-image"
+            />
+            {allReviewImages.length > 1 && (
+              <div className="review-image-modal-counter">
+                {currentReviewImageIndex + 1} / {allReviewImages.length}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export default ProductDetail
-

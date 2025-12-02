@@ -11,31 +11,44 @@ export const useTheme = () => {
 }
 
 export const ThemeProvider = ({ children }) => {
+  // localStorage'dan tema tercihini al, yoksa 'light' kullan
   const [theme, setTheme] = useState(() => {
-    // LocalStorage'dan tema tercihini al veya varsayılan olarak 'light' kullan
-    const savedTheme = localStorage.getItem('theme')
-    const initialTheme = savedTheme || 'light'
-    // İlk render'da hemen uygula
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-theme', initialTheme)
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('hiedra-theme')
+      return savedTheme || 'light'
     }
-    return initialTheme
+    return 'light'
   })
 
+  // Tema değiştiğinde DOM'u güncelle
   useEffect(() => {
-    // Tema değiştiğinde LocalStorage'a kaydet ve body'ye class ekle
-    localStorage.setItem('theme', theme)
-    document.documentElement.setAttribute('data-theme', theme)
+    const root = document.documentElement
+    root.setAttribute('data-theme', theme)
+    localStorage.setItem('hiedra-theme', theme)
+    
+    // Body'ye de class ekle
+    document.body.classList.remove('theme-light', 'theme-dark')
+    document.body.classList.add(`theme-${theme}`)
   }, [theme])
 
+  // Tema toggle fonksiyonu
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light')
+    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+  }
+
+  // Belirli bir temayı seç
+  const selectTheme = (newTheme) => {
+    if (newTheme === 'light' || newTheme === 'dark') {
+      setTheme(newTheme)
+    }
   }
 
   const value = {
     theme,
+    isDark: theme === 'dark',
+    isLight: theme === 'light',
     toggleTheme,
-    isDark: theme === 'dark'
+    selectTheme
   }
 
   return (
@@ -45,3 +58,4 @@ export const ThemeProvider = ({ children }) => {
   )
 }
 
+export default ThemeContext

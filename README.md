@@ -14,7 +14,7 @@ npm install
 npm run dev
 ```
 
-Uygulama http://localhost:3000 adresinde çalışacaktır.
+Uygulama yusufakin.online adresinde çalışacaktır.
 
 ## Özellikler
 
