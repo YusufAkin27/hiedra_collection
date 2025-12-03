@@ -5,7 +5,7 @@ import SEO from './SEO'
 import LazyImage from './LazyImage'
 import './OrderDetail.css'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
 
 const OrderDetail = () => {
   const { orderNumber } = useParams()

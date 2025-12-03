@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import './MyReviews.css'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
 
 const MyReviews = () => {
   const { isAuthenticated, accessToken } = useAuth()

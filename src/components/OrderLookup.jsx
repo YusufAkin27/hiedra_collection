@@ -5,7 +5,7 @@ import SEO from './SEO'
 import './OrderLookup.css'
 
 // Backend base URL
-const BACKEND_BASE_URL = 'http://localhost:8080'
+const BACKEND_BASE_URL = 'https://eticaret-5aic.onrender.com'
 const API_BASE_URL = `${BACKEND_BASE_URL}/api/orders`
 const SHIPPING_API_BASE_URL = `${BACKEND_BASE_URL}/api/shipping`
 const REVIEW_API_BASE_URL = `${BACKEND_BASE_URL}/api/reviews`

@@ -131,7 +131,7 @@ const ProductSpecificationsAccordion = React.memo(({ selectedProduct }) => {
   )
 })
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
 
 const ProductList = () => {
   const navigate = useNavigate()
@@ -142,7 +142,7 @@ const ProductList = () => {
   const [products, setProducts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
 
   // Backend'den ürünleri ve kategorileri çek
   useEffect(() => {

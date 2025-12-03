@@ -8,7 +8,7 @@ import SEO from './SEO'
 import './ProductDetail.css'
 import './CategoriesShowcase.css'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
 
 const ProductDetail = () => {
   const { id } = useParams()

@@ -120,7 +120,7 @@ export const AuthProvider = ({ children }) => {
 
   const requestCode = async (email) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+      const API_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
       
       // IP adresini al
       const clientIp = await getClientIpAddress()
@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }) => {
 
   const verifyCode = async (email, code) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+      const API_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
       
       // IP adresini al
       const clientIp = await getClientIpAddress()

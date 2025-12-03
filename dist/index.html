@@ -32,7 +32,7 @@
     <link rel="dns-prefetch" href="https://res.cloudinary.com" />
     
     <!-- API preconnect for faster API calls -->
-    <link rel="dns-prefetch" href="http://localhost:8080" />
+    <link rel="dns-prefetch" href="https://eticaret-5aic.onrender.com" />
     <link rel="dns-prefetch" href="http://172.20.10.2:8080" />
     
     <!-- Font Display Strategy: swap for better performance -->
@@ -51,18 +51,17 @@
     <meta http-equiv="Cache-Control" content="public, max-age=31536000, immutable" />
     
     <title>Perde Satış - Tül Perde Fiyatları | Zebra Perde, Klasik Perde | Hiedra Perde</title>
-    <script type="module" crossorigin src="/assets/js/index-CXfDXBCE.js"></script>
+    <script type="module" crossorigin src="/assets/js/index-h050gNYs.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/js/vendor-invariant-BME_2b6A.js">
     <link rel="modulepreload" crossorigin href="/assets/js/vendor-shallowequal-CcIhOdxx.js">
     <link rel="modulepreload" crossorigin href="/assets/js/vendor-scheduler-BVKd3TJG.js">
     <link rel="modulepreload" crossorigin href="/assets/js/vendor-@remix-run-BWfEV5os.js">
     <link rel="modulepreload" crossorigin href="/assets/js/react-vendor-2SZXphvN.js">
-    <link rel="modulepreload" crossorigin href="/assets/js/context-Fvoum6Gs.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/context-Ch8ZyfUe.js">
     <link rel="stylesheet" crossorigin href="/assets/index-C3926ELC.css">
   </head>
   <body>
-    <div id="root"></div>
-
+    <div id="root"></div>
     <!-- 3D Secure Callback Handler - Backend'den gelen JSON'u yakala ve API'ye istek at -->
     <script>
       // Backend URL'sine yönlendirilmişse JSON response'u yakala veya API'ye istek at
@@ -82,7 +81,7 @@
           function getFrontendBaseUrl() {
             const isBackendDomain = currentUrl.includes('172.20.10.2:8080');
             if (isBackendDomain) {
-              const savedFrontendUrl = sesyusufakin.onlinefrontendUrl');
+              const savedFrontendUrl = sessionStorage.getItem('frontendUrl');
               return savedFrontendUrl || 'http://localhost:3000';
             }
             return window.location.origin;
