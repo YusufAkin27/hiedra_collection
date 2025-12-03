@@ -83,14 +83,13 @@ const MyOrders = () => {
         // Backend'den gelen siparişleri set et
         const ordersList = data.data || []
         setOrders(ordersList)
-        console.log('Siparişler yüklendi:', ordersList.length, 'adet')
       } else {
         // Başarısız response
         setOrders([])
         setError(data.message || 'Siparişler yüklenemedi')
       }
     } catch (err) {
-      console.error('Siparişler yüklenirken hata:', err)
+      // Orders load error
       setError(err.message || 'Siparişler yüklenirken bir hata oluştu')
     } finally {
       setIsLoading(false)
@@ -152,7 +151,7 @@ const MyOrders = () => {
         setTrackingDataMap(prev => ({ ...prev, [orderKey]: data.data }))
       }
     } catch (err) {
-      console.error('Kargo takip bilgisi alınırken hata:', err)
+      // Tracking info error
     } finally {
       setLoadingTracking(prev => ({ ...prev, [orderKey]: false }))
     }
@@ -318,7 +317,7 @@ const MyOrders = () => {
         fetchMyOrders()
       }, 2000)
     } catch (err) {
-      console.error('Yorum eklenirken hata:', err)
+      // Review add error
       setError(err.message || 'Yorum eklenirken bir hata oluştu')
     } finally {
       setIsSubmittingReview(false)
@@ -354,7 +353,7 @@ const MyOrders = () => {
       }
     } catch (err) {
       // Hata durumunda devam et
-      console.error('Yorum kontrolü hatası:', err)
+      // Review check error
     }
   }
 
@@ -414,11 +413,11 @@ const MyOrders = () => {
             setExistingReviews({})
           }
         } else {
-          console.error('Yorum kontrolü başarısız:', response.status)
+          // Review check failed
           setExistingReviews({})
           }
         } catch (err) {
-        console.error('Yorum kontrolü hatası:', err)
+        // Review check error
         setExistingReviews({})
       }
     }

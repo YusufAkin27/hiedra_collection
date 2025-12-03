@@ -60,7 +60,7 @@ const MyContracts = () => {
           setAcceptances(historyData.data || [])
         }
       } catch (err) {
-        console.error('Sözleşmeler yüklenirken hata:', err)
+        // Contracts load error
         setError('Sözleşmeler yüklenirken bir hata oluştu')
       } finally {
         setIsLoading(false)
@@ -126,7 +126,7 @@ const MyContracts = () => {
         toast.error(errorMsg)
       }
     } catch (err) {
-      console.error('Sözleşme feshedilirken hata:', err)
+      // Contract termination error
       toast.error('Sözleşme feshedilirken bir hata oluştu')
     }
   }

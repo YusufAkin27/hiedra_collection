@@ -20,7 +20,6 @@ const loadAuthFromStorage = () => {
     
     return authData
   } catch (error) {
-    console.error('Auth yüklenirken hata:', error)
     return null
   }
 }
@@ -36,7 +35,7 @@ const saveAuthToStorage = (authData) => {
     }
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data))
   } catch (error) {
-    console.error('Auth kaydedilirken hata:', error)
+    // Auth save error
   }
 }
 
@@ -88,12 +87,11 @@ export const AuthProvider = ({ children }) => {
         if (ipResponse.ok) {
           const ipData = await ipResponse.json()
           if (ipData.ip && ipData.ip.trim() !== '' && ipData.ip !== '127.0.0.1' && ipData.ip !== '::1') {
-            console.log('IP adresi alındı (ipify):', ipData.ip)
             return ipData.ip.trim()
           }
         }
       } catch (error) {
-        console.warn('ipify servisi ile IP alınamadı, alternatif deneniyor:', error)
+        // ipify service failed, trying alternative
       }
       
       // Alternatif IP servisi (text format)
@@ -103,15 +101,14 @@ export const AuthProvider = ({ children }) => {
         if (altResponse.ok) {
           const ipText = await altResponse.text()
           if (ipText && ipText.trim() !== '' && ipText.trim() !== '127.0.0.1' && ipText.trim() !== '::1') {
-            console.log('IP adresi alındı (ipify text):', ipText.trim())
             return ipText.trim()
           }
         }
       } catch (error) {
-        console.warn('Alternatif IP servisi ile IP alınamadı:', error)
+        // Alternative IP service failed
       }
     } catch (error) {
-      console.warn('IP servisi ile IP alınamadı:', error)
+      // IP service failed
     }
     
     // Fallback: Eğer IP servisi çalışmazsa, backend'in kendi IP tespitini kullanması için null döndür
@@ -146,7 +143,6 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || 'Kod gönderilemedi')
       }
     } catch (error) {
-      console.error('Request code error:', error)
       return { success: false, error: error.message || 'Kod gönderilirken bir hata oluştu' }
     }
   }
@@ -189,7 +185,6 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || 'Doğrulama başarısız')
       }
     } catch (error) {
-      console.error('Verify code error:', error)
       return { success: false, error: error.message || 'Doğrulama yapılırken bir hata oluştu' }
     }
   }

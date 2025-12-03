@@ -173,7 +173,7 @@ const ProductList = () => {
             }
             
             if (!Array.isArray(productsData)) {
-              console.warn('productsData array değil, boş array kullanılıyor:', productsData)
+              // productsData is not an array, using empty array
               productsData = []
             }
             
@@ -234,19 +234,19 @@ const ProductList = () => {
               })
             setProducts(formattedProducts)
           } else {
-            console.warn('Ürünler yüklenemedi:', data.message || 'Bilinmeyen hata')
+            // Products load failed
           }
         } else {
-          console.error('API yanıtı başarısız:', response.status, response.statusText)
+          // API response failed
           try {
             const errorData = await response.json().catch(() => ({}))
-            console.error('Hata detayı:', errorData)
+            // Error details
           } catch (e) {
-            console.error('Hata yanıtı parse edilemedi')
+            // Error response parse failed
           }
         }
       } catch (error) {
-        console.error('Ürünler yüklenirken hata:', error)
+        // Products load error
       } finally {
         setIsLoading(false)
       }

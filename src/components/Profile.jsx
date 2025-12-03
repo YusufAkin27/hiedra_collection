@@ -96,7 +96,7 @@ const Profile = () => {
         })
       }
     } catch (err) {
-      console.error('Profil yükleme hatası:', err)
+      // Profile load error
       setError('Profil bilgileri yüklenemedi')
     } finally {
       setLoading(false)
@@ -208,7 +208,7 @@ const Profile = () => {
         setError(data.message || 'Profil güncellenemedi')
       }
     } catch (err) {
-      console.error('Profil güncelleme hatası:', err)
+      // Profile update error
       setError('Profil güncellenirken bir hata oluştu')
     } finally {
       setSaving(false)

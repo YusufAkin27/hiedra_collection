@@ -32,7 +32,7 @@ const ContractsList = () => {
           setError(data.message || 'Sözleşmeler yüklenemedi')
         }
       } catch (err) {
-        console.error('Sözleşmeler yüklenirken hata:', err)
+        // Contracts load error
         setError('Sözleşmeler yüklenirken bir hata oluştu')
       } finally {
         setIsLoading(false)

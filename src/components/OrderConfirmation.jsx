@@ -93,7 +93,7 @@ const OrderConfirmation = () => {
           sessionStorage.removeItem('lastOrderData')
         }
       } catch (e) {
-        console.error('SessionStorage parse hatası:', e)
+        // SessionStorage parse error
       }
     }
     
@@ -125,7 +125,7 @@ const OrderConfirmation = () => {
             }
           }
         } catch (e) {
-          console.error('Checkout data parse hatası:', e)
+          // Checkout data parse error
           data = {
             orderNumber: orderNumber,
             contactInfo: {},
@@ -146,7 +146,7 @@ const OrderConfirmation = () => {
         setLoading(false)
         }
     } catch (err) {
-      console.error('Sipariş detayları yüklenirken hata:', err)
+      // Order details load error
       setError('Sipariş detayları yüklenirken bir hata oluştu')
       setLoading(false)
     }
@@ -165,7 +165,6 @@ const OrderConfirmation = () => {
     // URL'den order numarasını temizle (trim ve decode)
     if (urlOrderNumber) {
       urlOrderNumber = urlOrderNumber.trim()
-      console.log('URL\'den order numarası alındı:', urlOrderNumber)
       fetchOrderDetails(urlOrderNumber)
     } else {
       // URL'de order numarası yoksa, state veya sessionStorage'dan al
@@ -179,7 +178,7 @@ const OrderConfirmation = () => {
             sessionStorage.removeItem('lastOrderData')
           }
         } catch (e) {
-          console.error('SessionStorage parse hatası:', e)
+          // SessionStorage parse error
         }
     }
     
@@ -187,7 +186,7 @@ const OrderConfirmation = () => {
       setOrderData(data)
       setLoading(false)
     } else {
-      console.warn('Order data bulunamadı, ana sayfaya yönlendiriliyor')
+      // Order data not found, redirecting to home
       navigate('/', { replace: true })
     }
     }

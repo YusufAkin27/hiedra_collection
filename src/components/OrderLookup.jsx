@@ -373,7 +373,7 @@ const OrderLookup = () => {
         setTrackingData(null)
       }
     } catch (err) {
-      console.error('Kargo takip bilgisi alınırken hata:', err)
+      // Tracking info error
       setTrackingData(null)
     } finally {
       setIsTrackingLoading(false)
@@ -454,7 +454,7 @@ const OrderLookup = () => {
         }
       } catch (err) {
         // Hata durumunda devam et
-        console.error(`Yorum kontrolü hatası (productId: ${productId}):`, err)
+        // Review check error
       }
       return { productId, hasReviewed: false }
     })
@@ -581,7 +581,7 @@ const OrderLookup = () => {
         [reviewModal.productId]: true
       }))
     } catch (err) {
-      console.error('Yorum gönderilirken hata:', err)
+      // Review send error
       showToast(err.message || 'Yorum gönderilirken bir hata oluştu', 'error')
     } finally {
       setIsSubmittingReview(false)
@@ -823,7 +823,7 @@ const OrderLookup = () => {
       const url = window.URL.createObjectURL(blob)
       window.open(url, '_blank')
     } catch (err) {
-      console.error('Fatura görüntüleme hatası:', err)
+      // Invoice view error
       showToast('Fatura görüntülenirken bir hata oluştu.', 'error')
     }
   }
@@ -848,7 +848,7 @@ const OrderLookup = () => {
       
       showToast('Fatura e-posta adresinize gönderildi!', 'success')
     } catch (err) {
-      console.error('Fatura e-posta hatası:', err)
+      // Invoice email error
       showToast(err.message || 'Fatura gönderilirken bir hata oluştu.', 'error')
     } finally {
       setIsSendingInvoice(false)

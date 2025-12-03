@@ -46,7 +46,7 @@ const MyReviews = () => {
         setError(data.message || 'Yorumlar yüklenemedi')
       }
     } catch (err) {
-      console.error('Yorumlar yüklenirken hata:', err)
+      // Reviews load error
       setError('Yorumlar yüklenirken bir hata oluştu')
     } finally {
       setLoading(false)
@@ -78,7 +78,7 @@ const MyReviews = () => {
         setError(data.message || 'Yorum silinemedi')
       }
     } catch (err) {
-      console.error('Yorum silinirken hata:', err)
+      // Review delete error
       setError('Yorum silinirken bir hata oluştu')
     }
   }

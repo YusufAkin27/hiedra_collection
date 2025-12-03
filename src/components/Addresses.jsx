@@ -70,7 +70,7 @@ const Addresses = () => {
         setError(data.message || 'Adresler yüklenemedi')
       }
     } catch (err) {
-      console.error('Adresler yüklenirken hata:', err)
+      // Addresses load error
       setError('Adresler yüklenirken bir hata oluştu')
     } finally {
       setLoading(false)
@@ -122,7 +122,7 @@ const Addresses = () => {
         setError(data.message || 'İşlem başarısız')
       }
     } catch (err) {
-      console.error('Adres kaydedilirken hata:', err)
+      // Address save error
       setError('Adres kaydedilirken bir hata oluştu')
     }
   }
@@ -173,7 +173,7 @@ const Addresses = () => {
         setError(data.message || 'Adres silinemedi')
       }
     } catch (err) {
-      console.error('Adres silinirken hata:', err)
+      // Address delete error
       setError('Adres silinirken bir hata oluştu')
     }
   }
@@ -210,7 +210,7 @@ const Addresses = () => {
         setError(data.message || 'Varsayılan adres güncellenemedi')
       }
     } catch (err) {
-      console.error('Varsayılan adres güncellenirken hata:', err)
+      // Default address update error
       setError('Varsayılan adres güncellenirken bir hata oluştu')
     }
   }

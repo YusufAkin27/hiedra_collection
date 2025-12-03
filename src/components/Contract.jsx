@@ -44,7 +44,7 @@ const Contract = () => {
           setError(data.message || 'Sözleşme yüklenemedi')
         }
       } catch (err) {
-        console.error('Sözleşme yüklenirken hata:', err)
+        // Contract load error
         setError('Sözleşme yüklenirken bir hata oluştu')
       } finally {
         setIsLoading(false)
@@ -79,7 +79,7 @@ const Contract = () => {
         }
       }
     } catch (err) {
-      console.error('Onay durumu kontrol edilirken hata:', err)
+      // Approval status check error
     }
   }
 
@@ -119,7 +119,7 @@ const Contract = () => {
         toast.error(errorMsg)
       }
     } catch (err) {
-      console.error('Sözleşme onaylanırken hata:', err)
+      // Contract approval error
       toast.error('Sözleşme onaylanırken bir hata oluştu')
     } finally {
       setIsAccepting(false)

@@ -108,7 +108,7 @@ const Checkout = () => {
         }
       }
     } catch (error) {
-      console.error('Profil bilgileri yüklenirken hata:', error)
+      // Profile load error
     }
   }
 
@@ -149,7 +149,7 @@ const Checkout = () => {
         }
       }
     } catch (error) {
-      console.error('Adresler yüklenirken hata:', error)
+      // Addresses load error
     } finally {
       setLoadingAddresses(false)
     }
@@ -343,7 +343,7 @@ const Checkout = () => {
         setContractAccepted(false)
     }
     } catch (err) {
-      console.error('Sözleşme onaylanırken hata:', err)
+      // Contract approval error
       toast.error('Sözleşme onaylanırken bir hata oluştu')
       setAgreements({ preInformation: false, distanceSelling: false })
       setContractAccepted(false)
@@ -486,7 +486,7 @@ const Checkout = () => {
         }
       }
     } catch (err) {
-      console.error('Ödeme API hatası:', err)
+      // Payment API error
       return {
         success: false,
         message: err.message || 'Ödeme işlemi sırasında bir hata oluştu.'
@@ -536,7 +536,7 @@ const Checkout = () => {
         navigate('/odeme-basarisiz', { state: { errorMessage: paymentResult.message } })
       }
     } catch (error) {
-      console.error('Ödeme işlemi hatası:', error)
+      // Payment process error
       setIsProcessing(false)
       navigate('/odeme-basarisiz')
     }

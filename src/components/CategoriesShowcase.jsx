@@ -403,7 +403,7 @@ const CategoriesShowcase = ({
         const text = await response.text()
         data = text ? JSON.parse(text) : {}
       } catch (parseError) {
-        console.error('Response parse hatası:', parseError)
+        // Response parse error
         throw new Error('Sunucudan geçersiz yanıt alındı')
       }
       
@@ -415,7 +415,7 @@ const CategoriesShowcase = ({
             try {
               await refreshCart()
             } catch (refreshError) {
-              console.error('Sepet yenileme hatası:', refreshError)
+              // Cart refresh error
             }
           }
           
@@ -430,7 +430,7 @@ const CategoriesShowcase = ({
         throw new Error(errorMessage)
       }
     } catch (error) {
-      console.error('Sepete ekleme hatası:', error)
+      // Add to cart error
       const errorMessage = error.message || 'Ürün sepete eklenirken bir hata oluştu. Lütfen tekrar deneyin.'
       toast.error(errorMessage)
     }

@@ -64,7 +64,7 @@ const AddAddress = () => {
         }
       }
     } catch (err) {
-      console.error('Profil bilgileri yüklenirken hata:', err)
+      // Profile load error
       setProfileLoaded(true)
     }
   }
@@ -103,7 +103,7 @@ const AddAddress = () => {
         setError(data.message || 'Adres eklenemedi')
       }
     } catch (err) {
-      console.error('Adres eklenirken hata:', err)
+      // Address add error
       setError('Adres eklenirken bir hata oluştu')
     } finally {
       setLoading(false)

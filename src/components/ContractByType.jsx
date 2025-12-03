@@ -58,7 +58,7 @@ const ContractByType = ({ contractType, seoTitle, seoDescription, seoUrl }) => {
           setError(data.message || 'Sözleşme yüklenemedi')
         }
       } catch (err) {
-        console.error('Sözleşme yüklenirken hata:', err)
+        // Contract load error
         setError('Sözleşme yüklenirken bir hata oluştu')
       } finally {
         setIsLoading(false)
@@ -91,7 +91,7 @@ const ContractByType = ({ contractType, seoTitle, seoDescription, seoUrl }) => {
         }
       }
     } catch (err) {
-      console.error('Onay durumu kontrol edilirken hata:', err)
+      // Approval status check error
     }
   }
 
@@ -127,7 +127,7 @@ const ContractByType = ({ contractType, seoTitle, seoDescription, seoUrl }) => {
         toast.error(errorMsg)
       }
     } catch (err) {
-      console.error('Sözleşme onaylama hatası:', err)
+      // Contract approval error
       const errorMsg = err.message || 'Sözleşme onaylanırken bir hata oluştu'
       setError(errorMsg)
       toast.error(errorMsg)

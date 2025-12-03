@@ -77,7 +77,7 @@ const CategoryProducts = () => {
           }
         }
       } catch (error) {
-        console.error('Ürünler yüklenirken hata:', error)
+        // Products load error
       } finally {
         setIsLoading(false)
       }

@@ -25,7 +25,7 @@ const loadCartFromStorage = () => {
     
     return cartData.items || []
   } catch (error) {
-    console.error('Sepet yüklenirken hata:', error)
+    // Cart load error
     return []
   }
 }
@@ -41,7 +41,7 @@ const saveCartToStorage = (items) => {
     }
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartData))
   } catch (error) {
-    console.error('Sepet kaydedilirken hata:', error)
+    // Cart save error
   }
 }
 
@@ -85,7 +85,7 @@ export const CartProvider = ({ children }) => {
 
       if (!response.ok) {
         // Response ok değilse, boş sepet döndür
-        console.warn('Sepet backend\'den yüklenemedi, status:', response.status)
+        // Cart backend load failed
         setCartItems([])
         return []
       }
@@ -130,12 +130,12 @@ export const CartProvider = ({ children }) => {
         return formattedItems
       } else {
         // Backend başarısız yanıt döndü
-        console.warn('Sepet backend\'den yüklenemedi:', data.message)
+        // Cart backend load failed
         setCartItems([])
         return []
       }
     } catch (error) {
-      console.error('Sepet backend\'den yüklenirken hata:', error)
+      // Cart backend load error
       // Hata durumunda boş sepet döndür
       setCartItems([])
       return []

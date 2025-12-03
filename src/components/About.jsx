@@ -43,7 +43,7 @@ const About = () => {
           loading: false
         })
       } catch (error) {
-        console.error('İstatistikler yüklenirken hata:', error)
+        // Statistics load error
         setProductStats(prev => ({ ...prev, loading: false }))
       }
     }

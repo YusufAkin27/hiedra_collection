@@ -148,7 +148,7 @@ const OrderDetail = () => {
         throw new Error(data.message || 'Sipariş yüklenemedi')
       }
     } catch (err) {
-      console.error('Sipariş yüklenirken hata:', err)
+      // Order load error
       setError(err.message || 'Sipariş yüklenirken bir hata oluştu')
     } finally {
       setIsLoading(false)
@@ -193,7 +193,7 @@ const OrderDetail = () => {
         throw new Error(data.message || 'İade talebi oluşturulamadı')
       }
     } catch (err) {
-      console.error('İade talebi oluşturulurken hata:', err)
+      // Refund request error
       setError(err.message || 'İade talebi oluşturulurken bir hata oluştu')
     } finally {
       setIsProcessing(false)
@@ -222,7 +222,7 @@ const OrderDetail = () => {
         setTrackingData(data.data)
       }
     } catch (err) {
-      console.error('Kargo takip bilgisi alınırken hata:', err)
+      // Tracking info error
     } finally {
       setIsTrackingLoading(false)
     }
@@ -333,7 +333,7 @@ const OrderDetail = () => {
       }
     } catch (err) {
       // Hata durumunda devam et
-      console.error('Yorum kontrolü hatası:', err)
+      // Review check error
     }
   }
 
@@ -370,7 +370,7 @@ const OrderDetail = () => {
         }
       } catch (err) {
         // Hata durumunda devam et
-        console.error(`Yorum kontrolü hatası (productId: ${productId}):`, err)
+        // Review check error
       }
       return { productId, hasReviewed: false }
     })
@@ -521,7 +521,7 @@ const OrderDetail = () => {
         throw new Error(data.message || 'Adres güncellenemedi')
       }
     } catch (err) {
-      console.error('Adres güncellenirken hata:', err)
+      // Address update error
       setError(err.message || 'Adres güncellenirken bir hata oluştu')
     } finally {
       setIsUpdatingAddress(false)
@@ -573,13 +573,6 @@ const OrderDetail = () => {
       if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`
       }
-
-      console.log('Yorum gönderiliyor:', {
-        productId: reviewModal.productId,
-        rating: reviewRating,
-        hasToken: !!accessToken,
-        tokenLength: accessToken?.length
-      })
 
       const response = await fetch(`${API_BASE_URL}/reviews`, {
         method: 'POST',
@@ -635,7 +628,7 @@ const OrderDetail = () => {
         fetchOrderDetails()
       }, 2000)
     } catch (err) {
-      console.error('Yorum eklenirken hata:', err)
+      // Review add error
       setError(err.message || 'Yorum eklenirken bir hata oluştu')
     } finally {
       setIsSubmittingReview(false)
@@ -663,7 +656,7 @@ const OrderDetail = () => {
       const url = window.URL.createObjectURL(blob)
       window.open(url, '_blank')
     } catch (err) {
-      console.error('Fatura görüntüleme hatası:', err)
+      // Invoice view error
       setError('Fatura görüntülenirken bir hata oluştu.')
     }
   }
@@ -695,7 +688,7 @@ const OrderDetail = () => {
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
     } catch (err) {
-      console.error('Fatura indirme hatası:', err)
+      // Invoice download error
       setError('Fatura indirilirken bir hata oluştu.')
     }
   }
@@ -723,7 +716,7 @@ const OrderDetail = () => {
       
       setSuccess('Fatura e-posta adresinize gönderildi!')
     } catch (err) {
-      console.error('Fatura e-posta hatası:', err)
+      // Invoice email error
       setError(err.message || 'Fatura gönderilirken bir hata oluştu.')
     } finally {
       setIsSendingInvoice(false)

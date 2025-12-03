@@ -65,8 +65,6 @@
                              (currentUrl.includes('8080') && currentUrl.includes('/api/'));
         
         if (isBackendUrl) {
-          console.log('Backend URL detected, processing payment callback...');
-          
           const BACKEND_BASE_URL = 'http://172.20.10.2:8080';
           const API_BASE_URL = BACKEND_BASE_URL + '/api/payment';
           
@@ -100,14 +98,12 @@
               sessionStorage.setItem('lastOrderData', JSON.stringify(orderData));
               
               const frontendBaseUrl = getFrontendBaseUrl();
-              console.log('Redirecting to frontend success page:', frontendBaseUrl + '/siparis-onayi');
               window.location.replace(frontendBaseUrl + '/siparis-onayi');
               return true;
             } else {
               // Başarısız
               sessionStorage.setItem('paymentError', jsonData.message || 'Ödeme işlemi başarısız oldu.');
               const frontendBaseUrl = getFrontendBaseUrl();
-              console.log('Redirecting to error page:', frontendBaseUrl + '/odeme-basarisiz');
               window.location.replace(frontendBaseUrl + '/odeme-basarisiz');
               return true;
             }
@@ -130,11 +126,10 @@
               try {
                 const jsonData = JSON.parse(jsonText);
                 if (jsonData.success !== undefined || jsonData.isSuccess !== undefined || jsonData.message) {
-                  console.log('JSON response found in backend page:', jsonData);
                   return jsonData;
                 }
               } catch (e) {
-                console.log('JSON parse error:', e);
+                // JSON parse error
               }
             }
             return null;
@@ -162,8 +157,6 @@
               const url = API_BASE_URL + '/3d-callback?paymentId=' + encodeURIComponent(paymentId) + 
                          '&conversationId=' + encodeURIComponent(conversationId);
               
-              console.log('Calling backend API:', url);
-              
               const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -173,18 +166,16 @@
               });
               
               const responseText = await response.text();
-              console.log('Backend API response:', responseText);
               
               // Response JSON mu kontrol et
               if (responseText.trim().startsWith('{')) {
                 try {
                   const jsonData = JSON.parse(responseText);
                   if (jsonData.success !== undefined || jsonData.isSuccess !== undefined || jsonData.message) {
-                    console.log('Payment response from API:', jsonData);
                     return handlePaymentResponse(jsonData);
                   }
                 } catch (e) {
-                  console.error('API response JSON parse error:', e);
+                  // JSON parse error
                 }
               }
               
@@ -194,7 +185,6 @@
               window.location.replace(frontendBaseUrl + '/odeme-basarisiz');
               return true;
             } catch (err) {
-              console.error('Backend API call error:', err);
               sessionStorage.setItem('paymentError', 'Sunucuya bağlanılamadı. Lütfen tekrar deneyiniz.');
               const frontendBaseUrl = getFrontendBaseUrl();
               window.location.replace(frontendBaseUrl + '/odeme-basarisiz');
@@ -210,7 +200,6 @@
               const urlParams = new URLSearchParams(window.location.search);
               const orderNumber = urlParams.get('order');
               if (orderNumber) {
-                console.log('Backend redirect ile order numarası geldi:', orderNumber);
                 const sessionData = JSON.parse(sessionStorage.getItem('checkoutData') || '{}');
                 const orderData = {
                   orderNumber: orderNumber,
@@ -227,7 +216,7 @@
                 return true;
               }
             } catch (e) {
-              console.log('Order parameter check error:', e);
+              // Order parameter check error
             }
             
             // İKİNCİ: Sayfa içeriğinde JSON var mı kontrol et
@@ -239,8 +228,6 @@
             // ÜÇÜNCÜ: URL parametrelerini kontrol et (paymentId ve conversationId)
             const { paymentId, conversationId } = getUrlParams();
             if (paymentId && conversationId) {
-              console.log('URL parameters found, calling backend API:', { paymentId, conversationId });
-              
               // Parametreleri sessionStorage'a kaydet (eğer API çağrısı başarısız olursa tekrar kullanmak için)
               sessionStorage.setItem('pendingPaymentId', paymentId);
               sessionStorage.setItem('pendingConversationId', conversationId);
@@ -254,10 +241,6 @@
             const pendingPaymentId = sessionStorage.getItem('pendingPaymentId');
             const pendingConversationId = sessionStorage.getItem('pendingConversationId');
             if (pendingPaymentId && pendingConversationId) {
-              console.log('Pending payment parameters found in sessionStorage, calling backend API:', { 
-                paymentId: pendingPaymentId, 
-                conversationId: pendingConversationId 
-              });
               callBackendAPI(pendingPaymentId, pendingConversationId);
               // Parametreleri temizle (tekrar kullanılmasın)
               sessionStorage.removeItem('pendingPaymentId');
@@ -273,9 +256,7 @@
             if (!processPaymentCallback()) {
               // Eğer sayfa yüklenmiş ama JSON/parametre yoksa, biraz bekle ve tekrar kontrol et
               setTimeout(() => {
-                if (!processPaymentCallback()) {
-                  console.log('No payment data found, waiting for page load...');
-                }
+                processPaymentCallback();
               }, 500);
             }
           } else {

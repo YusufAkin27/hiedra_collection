@@ -20,7 +20,7 @@ const Coupons = () => {
   try {
     authContext = useAuth()
   } catch (error) {
-    console.error('Auth context hatası:', error)
+    // Auth context error
     authContext = { accessToken: null }
   }
   
@@ -75,7 +75,7 @@ const Coupons = () => {
         setError('Beklenmeyen yanıt formatı')
       }
     } catch (err) {
-      console.error('Kuponlar yüklenirken hata:', err)
+      // Coupons load error
       if (err.message && err.message.includes('Failed to fetch')) {
         setError('Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.')
       } else {

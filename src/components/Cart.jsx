@@ -76,7 +76,7 @@ const Cart = () => {
         setCouponError(data.message || 'Kupon uygulanamadı')
       }
     } catch (error) {
-      console.error('Kupon uygulanırken hata:', error)
+      // Coupon apply error
       setCouponError('Kupon uygulanırken bir hata oluştu')
     } finally {
       setIsApplyingCoupon(false)
@@ -114,7 +114,7 @@ const Cart = () => {
         setCouponError(data.message || 'Kupon kaldırılamadı')
       }
     } catch (error) {
-      console.error('Kupon kaldırılırken hata:', error)
+      // Coupon remove error
       setCouponError('Kupon kaldırılırken bir hata oluştu')
     } finally {
       setIsRemovingCoupon(false)
@@ -145,7 +145,7 @@ const Cart = () => {
       
       removeFromCart(productId, itemKey)
     } catch (error) {
-      console.error('Sepetten ürün silinirken hata:', error)
+      // Remove from cart error
       removeFromCart(productId, itemKey)
     }
   }
@@ -182,7 +182,7 @@ const Cart = () => {
       
       updateQuantity(productId, newQuantity, itemKey)
     } catch (error) {
-      console.error('Sepet miktarı güncellenirken hata:', error)
+      // Cart quantity update error
       updateQuantity(productId, newQuantity, itemKey)
     }
   }

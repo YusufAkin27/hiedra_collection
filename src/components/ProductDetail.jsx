@@ -298,7 +298,7 @@ const ProductDetail = () => {
         setModalCalculatedPrice(Math.round(price * enMetre * pileMultiplier * 100) / 100)
       }
     } catch (error) {
-      console.error('Fiyat hesaplama hatası:', error)
+      // Price calculation error
       // Fallback hesaplama
       let pileMultiplier = 1
       try {
@@ -405,7 +405,7 @@ const ProductDetail = () => {
         throw new Error(data.message || 'Ürün sepete eklenemedi')
       }
     } catch (error) {
-      console.error('Sepete ekleme hatası:', error)
+      // Add to cart error
       const errorMessage = error.message || 'Sepete eklenirken hata oluştu.'
       setModalErrors(prev => ({ ...prev, general: errorMessage }))
       toast.error(errorMessage)
@@ -467,18 +467,15 @@ const ProductDetail = () => {
         const productId = typeof id === 'string' ? parseInt(id, 10) : id
         
         if (isNaN(productId)) {
-          console.error('Geçersiz ürün ID:', id)
+          // Invalid product ID
           setIsLoading(false)
           return
         }
 
-        console.log('Ürün detayı çekiliyor, ID:', productId)
-        
         const response = await fetch(`${API_BASE_URL}/products/${productId}`)
         
         if (response.ok) {
           const data = await response.json()
-          console.log('Backend yanıtı:', data)
           
           if (data.isSuccess || data.success) {
             const productData = data.data || data
@@ -515,18 +512,18 @@ const ProductDetail = () => {
               viewCount: productData.viewCount || 0,
             })
           } else {
-            console.error('Backend yanıt hatası:', data)
+            // Backend response error
             setProduct(null)
           }
         } else if (response.status === 404) {
-          console.error('Ürün bulunamadı (404)')
+          // Product not found (404)
           setProduct(null)
         } else {
-          console.error('HTTP hatası:', response.status)
+          // HTTP error
           setProduct(null)
         }
       } catch (error) {
-        console.error('Ürün yüklenirken hata:', error)
+        // Product load error
         setProduct(null)
       } finally {
         setIsLoading(false)
@@ -603,7 +600,7 @@ const ProductDetail = () => {
       })
       return Promise.resolve()
     } catch (error) {
-      console.error('Yorumlar yüklenirken hata:', error)
+      // Reviews load error
       setReviewError(error.message || 'Yorumlar yüklenirken bir hata oluştu.')
       return Promise.reject(error)
     } finally {
@@ -675,7 +672,7 @@ const ProductDetail = () => {
           }
         }
       } catch (error) {
-        console.error('Ürünler yüklenirken hata:', error)
+        // Products load error
       }
     }
     fetchAllProducts()
@@ -754,7 +751,7 @@ const ProductDetail = () => {
         calculatePriceFallback(enNum, pileValue)
       }
     } catch (error) {
-      console.error('Fiyat hesaplama hatası:', error)
+      // Price calculation error
       // Hata durumunda fallback hesaplama
       calculatePriceFallback(enNum, pileValue)
     } finally {
@@ -979,7 +976,7 @@ const ProductDetail = () => {
         throw new Error(data.message || 'Ürün sepete eklenemedi')
       }
     } catch (error) {
-      console.error('Sepete ekleme hatası:', error)
+      // Add to cart error
       setAddToCartError(error.message || 'Ürün sepete eklenirken bir hata oluştu. Lütfen tekrar deneyin.')
       // Fallback mekanizması kaldırıldı - sadece API ile çalışıyoruz
     } finally {

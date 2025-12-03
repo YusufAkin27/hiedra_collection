@@ -19,7 +19,7 @@ const PaymentFailed = () => {
         sessionStorage.removeItem('paymentError')
       }
     } catch (e) {
-      console.error('SessionStorage read error:', e)
+      // SessionStorage read error
     }
   }
 

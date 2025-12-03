@@ -49,7 +49,7 @@ const CouponDetail = () => {
         setError(data.message || 'Kupon yüklenemedi')
       }
     } catch (err) {
-      console.error('Kupon yüklenirken hata:', err)
+      // Coupon load error
       setError('Kupon yüklenirken bir hata oluştu')
     } finally {
       setIsLoading(false)

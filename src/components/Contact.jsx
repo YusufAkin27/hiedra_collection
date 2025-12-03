@@ -12,7 +12,6 @@ const Contact = () => {
   try {
     authContext = useAuth()
   } catch (error) {
-    console.error('Auth context hatası:', error)
     authContext = { isAuthenticated: false, accessToken: null }
   }
   
@@ -65,7 +64,6 @@ const Contact = () => {
         }
       }
     } catch (err) {
-      console.error('Profil bilgileri yüklenirken hata:', err)
       // Hata olsa bile devam et, kullanıcı manuel girebilir
       setProfileLoaded(true)
     }
@@ -118,23 +116,18 @@ const Contact = () => {
           const text = await response.text()
           // Boş response kontrolü
           if (!text || text.trim() === '') {
-            console.error('Boş response alındı')
             setError('Sunucudan yanıt alınamadı. Lütfen tekrar deneyiniz.')
             setIsLoading(false)
             return
           }
           data = JSON.parse(text)
-          console.log('API Response (gönder):', data) // Debug için
         } catch (parseError) {
-          console.error('JSON parse hatası:', parseError)
-          console.error('Parse edilemeyen text:', text.substring(0, 200))
           setError(`Sunucu yanıtı işlenemedi: ${parseError.message}`)
-          setIsLoading(false)
-          return
+            setIsLoading(false)
+            return
         }
       } else {
         const text = await response.text()
-        console.error('JSON olmayan response:', text)
         setError(`Beklenmeyen yanıt formatı: ${contentType || 'bilinmiyor'}`)
         setIsLoading(false)
         return
@@ -156,7 +149,6 @@ const Contact = () => {
         setError(data.message || `Hata: ${response.status} ${response.statusText}`)
       }
     } catch (err) {
-      console.error('API hatası:', err)
       if (err.message) {
         setError(`Hata: ${err.message}`)
       } else {
@@ -199,23 +191,18 @@ const Contact = () => {
           const text = await response.text()
           // Boş response kontrolü
           if (!text || text.trim() === '') {
-            console.error('Boş response alındı')
             setError('Sunucudan yanıt alınamadı. Lütfen tekrar deneyiniz.')
             setIsLoading(false)
             return
           }
           data = JSON.parse(text)
-          console.log('API Response (verify-email):', data) // Debug için
         } catch (parseError) {
-          console.error('JSON parse hatası:', parseError)
-          console.error('Parse edilemeyen text:', text.substring(0, 200))
           setError(`Sunucu yanıtı işlenemedi: ${parseError.message}`)
-          setIsLoading(false)
-          return
+            setIsLoading(false)
+            return
         }
       } else {
         const text = await response.text()
-        console.error('JSON olmayan response:', text)
         setError(`Beklenmeyen yanıt formatı: ${contentType || 'bilinmiyor'}`)
         setIsLoading(false)
         return
@@ -251,7 +238,6 @@ const Contact = () => {
         setError(data.message || `Hata: ${response.status} ${response.statusText}`)
       }
     } catch (err) {
-      console.error('API hatası:', err)
       if (err.message) {
         setError(`Hata: ${err.message}`)
       } else {

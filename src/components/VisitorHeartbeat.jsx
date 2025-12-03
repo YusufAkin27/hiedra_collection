@@ -60,7 +60,7 @@ function VisitorHeartbeat() {
         localStorage.setItem(STORAGE_KEY, returnedSessionId)
       }
     } catch (error) {
-      console.error('Ziyaretçi heartbeat hatası:', error)
+      // Visitor heartbeat error
     }
   }, [accessToken, currentPath, isAuthenticated, isBrowser])
 

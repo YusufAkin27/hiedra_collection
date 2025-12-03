@@ -51,7 +51,7 @@ const Login = () => {
         navigate('/')
       }
     } catch (err) {
-      console.error('Profil kontrolü hatası:', err)
+      // Profile check error
       navigate('/')
     }
   }
@@ -250,7 +250,7 @@ const Login = () => {
       }, 1000)
 
     } catch (error) {
-      console.error('Google login error:', error)
+      // Google login error
       setError('Google ile giriş yapılırken bir hata oluştu')
       setIsLoading(false)
     }
