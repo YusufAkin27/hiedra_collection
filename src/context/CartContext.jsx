@@ -7,7 +7,7 @@ const CartContext = createContext()
 const CART_STORAGE_KEY = 'hiedra_cart'
 const GUEST_USER_ID_KEY = 'guestUserId'
 const CART_EXPIRY_DAYS = 30 // 30 gün süre
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yusufakin.com.tr/api'
 
 // LocalStorage'dan sepeti yükle
 const loadCartFromStorage = () => {

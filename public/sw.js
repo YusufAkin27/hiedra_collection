@@ -1,6 +1,6 @@
-const CACHE_NAME = 'hiedra-offline-v1'
+const CACHE_NAME = 'hiedra-offline-v2'
 const OFFLINE_URL = '/offline.html'
-const APP_SHELL = ['/', OFFLINE_URL, '/logo.png']
+const APP_SHELL = ['/', '/index.html', OFFLINE_URL, '/logo.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -36,10 +36,27 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(async () => {
-        const cache = await caches.open(CACHE_NAME)
-        return cache.match(OFFLINE_URL)
-      })
+      fetch(request)
+        .then((response) => {
+          // Başarılı response döndür
+          if (response && response.status === 200) {
+            return response
+          }
+          // 404 veya başka hata durumunda index.html döndür
+          return caches.match('/index.html').then((cached) => {
+            return cached || fetch('/index.html')
+          })
+        })
+        .catch(async () => {
+          // Network hatası durumunda önce index.html'i dene
+          const cache = await caches.open(CACHE_NAME)
+          const cachedIndex = await cache.match('/index.html')
+          if (cachedIndex) {
+            return cachedIndex
+          }
+          // Yoksa offline sayfasını döndür
+          return cache.match(OFFLINE_URL) || cache.match('/')
+        })
     )
     return
   }

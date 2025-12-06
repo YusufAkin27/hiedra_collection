@@ -6,7 +6,7 @@ import Loading from './Loading'
 import SEO from './SEO'
 import './CouponDetail.css'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yusufakin.com.tr/api'
 
 const CouponDetail = () => {
   const { id } = useParams()

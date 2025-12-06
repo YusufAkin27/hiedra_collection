@@ -32,8 +32,7 @@
     <link rel="dns-prefetch" href="https://res.cloudinary.com" />
     
     <!-- API preconnect for faster API calls -->
-    <link rel="dns-prefetch" href="https://eticaret-5aic.onrender.com" />
-    <link rel="dns-prefetch" href="http://172.20.10.2:8080" />
+    <link rel="dns-prefetch" href="https://api.yusufakin.com.tr/" />
     
     <!-- Font Display Strategy: swap for better performance -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" />
@@ -60,17 +59,17 @@
       // Backend URL'sine yönlendirilmişse JSON response'u yakala veya API'ye istek at
       (function() {
         const currentUrl = window.location.href;
-        const isBackendUrl = currentUrl.includes('172.20.10.2:8080') || 
+        const isBackendUrl = currentUrl.includes('https://api.yusufakin.com.tr') || 
                              currentUrl.includes('/api/payment/3d-callback') ||
                              (currentUrl.includes('8080') && currentUrl.includes('/api/'));
         
         if (isBackendUrl) {
-          const BACKEND_BASE_URL = 'http://172.20.10.2:8080';
-          const API_BASE_URL = BACKEND_BASE_URL + '/api/payment';
+          const BACKEND_BASE_URL = 'https://api.yusufakin.com.tr/';
+          const API_BASE_URL = BACKEND_BASE_URL + 'api/payment';
           
           // Frontend base URL'i al
           function getFrontendBaseUrl() {
-            const isBackendDomain = currentUrl.includes('172.20.10.2:8080');
+            const isBackendDomain = currentUrl.includes('api.yusufakin.com.tr');
             if (isBackendDomain) {
               const savedFrontendUrl = sessionStorage.getItem('frontendUrl');
               return savedFrontendUrl || 'http://localhost:3000';

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import SEO from './SEO'
 import './About.css'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yusufakin.com.tr/api'
 
 const About = () => {
   const [productStats, setProductStats] = useState({

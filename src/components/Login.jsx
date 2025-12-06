@@ -9,7 +9,7 @@ const Login = () => {
   const navigate = useNavigate()
   const { requestCode, verifyCode, isAuthenticated, setUser, setAccessToken, saveAuthToStorage, accessToken } = useAuth()
   const { theme } = useTheme()
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yusufakin.com.tr/api'
   
   // Eğer zaten giriş yapılmışsa ana sayfaya yönlendir
   useEffect(() => {
@@ -169,7 +169,7 @@ const Login = () => {
     setIsLoading(true)
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.yusufakin.com.tr/api'
       
       // Google OAuth popup aç - OAuth2 authorization endpoint'ine direkt yönlendir
       const googleAuthUrl = `${API_URL}/auth/oauth2/authorization/google`

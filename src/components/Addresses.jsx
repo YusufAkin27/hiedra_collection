@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import './Addresses.css'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://eticaret-5aic.onrender.com/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yusufakin.com.tr/api'
 
 const Addresses = () => {
   const { isAuthenticated, accessToken } = useAuth()

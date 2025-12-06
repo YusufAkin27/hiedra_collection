@@ -5,10 +5,10 @@ import SEO from './SEO'
 import './OrderLookup.css'
 
 // Backend base URL
-const BACKEND_BASE_URL = 'https://eticaret-5aic.onrender.com'
-const API_BASE_URL = `${BACKEND_BASE_URL}/api/orders`
-const SHIPPING_API_BASE_URL = `${BACKEND_BASE_URL}/api/shipping`
-const REVIEW_API_BASE_URL = `${BACKEND_BASE_URL}/api/reviews`
+const BACKEND_BASE_URL = 'https://api.yusufakin.com.tr/'
+const API_BASE_URL = `${BACKEND_BASE_URL}api/orders`
+const SHIPPING_API_BASE_URL = `${BACKEND_BASE_URL}api/shipping`
+const REVIEW_API_BASE_URL = `${BACKEND_BASE_URL}api/reviews`
 
 const OrderLookup = () => {
   const { isAuthenticated } = useAuth()
@@ -809,7 +809,7 @@ const OrderLookup = () => {
   // Faturayı görüntüle
   const handleViewInvoice = async (orderNumber) => {
     try {
-      const response = await fetch(`${BACKEND_BASE_URL}/api/invoices/order/${orderNumber}/view`)
+      const response = await fetch(`${BACKEND_BASE_URL}api/invoices/order/${orderNumber}/view`)
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -833,7 +833,7 @@ const OrderLookup = () => {
     setIsSendingInvoice(true)
     
     try {
-      const response = await fetch(`${BACKEND_BASE_URL}/api/invoices/order/${orderNumber}/send-email`, {
+      const response = await fetch(`${BACKEND_BASE_URL}api/invoices/order/${orderNumber}/send-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

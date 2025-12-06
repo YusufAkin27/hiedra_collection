@@ -4,8 +4,8 @@ import SEO from './SEO'
 import './Payment3DCallback.css'
 
 // Backend base URL
-const BACKEND_BASE_URL = 'http://172.20.10.2:8080'
-const API_BASE_URL = `${BACKEND_BASE_URL}/api/payment`
+const BACKEND_BASE_URL = 'https://api.yusufakin.com.tr/'
+const API_BASE_URL = `${BACKEND_BASE_URL}api/payment`
 // Backend endpoint: /api/payment/3d-callback
 
 const Payment3DCallback = () => {
@@ -301,8 +301,8 @@ const Payment3DCallback = () => {
       const currentUrl = window.location.href
       const currentPath = window.location.pathname
       
-      // Backend URL'sine direkt yönlendirilmişse (örnek: http://172.20.10.2:8080/api/payment/3d-callback?paymentId=...)
-      if (currentUrl.includes('172.20.10.2:8080') || currentUrl.includes(BACKEND_BASE_URL)) {
+      // Backend URL'sine direkt yönlendirilmişse (örnek: https://api.yusufakin.com.tr/api/payment/3d-callback?paymentId=...)
+      if (currentUrl.includes('api.yusufakin.com.tr') || currentUrl.includes(BACKEND_BASE_URL)) {
         // Önce body'de JSON var mı kontrol et
         if (immediateBodyCheck()) {
           return // Zaten yönlendirildi
